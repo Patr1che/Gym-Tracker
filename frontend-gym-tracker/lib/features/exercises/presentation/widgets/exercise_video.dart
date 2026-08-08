@@ -172,13 +172,73 @@ class _EmbeddedPlayerState extends State<_EmbeddedPlayer> {
     super.dispose();
   }
 
+  Future<void> _openInYouTube() async {
+    final uri = Uri.parse(YouTubeUrlParser.watchUrl(widget.videoId));
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      if (mounted) showErrorSnack(context, 'Could not open YouTube.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.xl),
       child: AspectRatio(
         aspectRatio: 16 / 9,
-        child: YoutubePlayer(controller: _controller),
+        child: YoutubeValueBuilder(
+          controller: _controller,
+          builder: (context, value) {
+            // Some videos — Shorts especially — allow the oEmbed lookup but
+            // still refuse playback inside an embedded player. Offer a way
+            // out instead of leaving YouTube's dead-end error box.
+            if (value.error != YoutubeError.none) {
+              return _UnplayablePanel(onOpen: _openInYouTube);
+            }
+            return YoutubePlayer(controller: _controller);
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _UnplayablePanel extends StatelessWidget {
+  const _UnplayablePanel({required this.onOpen});
+
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      color: scheme.surfaceContainerHighest,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.videocam_off_rounded,
+              size: 30, color: scheme.onSurfaceVariant),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            "This video can't play inside the app",
+            style: Theme.of(context).textTheme.titleSmall,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Its owner restricted embedding.',
+            style: Theme.of(context).textTheme.labelSmall,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          FilledButton.icon(
+            onPressed: onOpen,
+            icon: const Icon(Icons.open_in_new_rounded, size: 18),
+            label: const Text('Watch on YouTube'),
+          ),
+        ],
       ),
     );
   }
