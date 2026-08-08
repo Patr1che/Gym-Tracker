@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:youtube_player_iframe/youtube_player_iframe.dart';
+import 'package:youtube_player_embed/youtube_player_embed.dart';
 
 import '../../../../core/domain/youtube_url_parser.dart';
 import '../../../../core/models/exercise.dart';
@@ -34,9 +34,16 @@ class ExerciseVideo extends ConsumerWidget {
       children: [
         _EmbeddedPlayer(key: ValueKey(videoId), videoId: videoId),
         const SizedBox(height: AppSpacing.sm),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
+        Wrap(
+          alignment: WrapAlignment.end,
           children: [
+            // Always available: some videos refuse to play embedded, and
+            // this is the way out when that happens.
+            TextButton.icon(
+              onPressed: () => _openOnYouTube(context, videoId),
+              icon: const Icon(Icons.open_in_new_rounded, size: 16),
+              label: const Text('Open in YouTube'),
+            ),
             TextButton.icon(
               onPressed: () => showVideoDialog(context, ref, exercise),
               icon: const Icon(Icons.edit_outlined, size: 16),
@@ -68,6 +75,18 @@ class ExerciseVideo extends ConsumerWidget {
         ),
       ],
     );
+  }
+}
+
+/// Opens a video in the YouTube app or browser.
+Future<void> _openOnYouTube(BuildContext context, String videoId) async {
+  try {
+    await launchUrl(
+      Uri.parse(YouTubeUrlParser.watchUrl(videoId)),
+      mode: LaunchMode.externalApplication,
+    );
+  } catch (_) {
+    if (context.mounted) showErrorSnack(context, 'Could not open YouTube.');
   }
 }
 
@@ -149,96 +168,21 @@ class _EmbeddedPlayer extends StatefulWidget {
 }
 
 class _EmbeddedPlayerState extends State<_EmbeddedPlayer> {
-  late final YoutubePlayerController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = YoutubePlayerController.fromVideoId(
-      videoId: widget.videoId,
-      // Never autoplay — the user may be mid-set with the sound up.
-      autoPlay: false,
-      params: const YoutubePlayerParams(
-        showFullscreenButton: true,
-        showControls: true,
-        strictRelatedVideos: true,
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.close();
-    super.dispose();
-  }
-
-  Future<void> _openInYouTube() async {
-    final uri = Uri.parse(YouTubeUrlParser.watchUrl(widget.videoId));
-    try {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {
-      if (mounted) showErrorSnack(context, 'Could not open YouTube.');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.xl),
-      child: AspectRatio(
+      // Loads https://www.youtube.com/embed/<id> as a real URL, so YouTube
+      // sees a valid referrer. Injecting player HTML into a WebView instead
+      // makes YouTube reject restricted videos with error 152-4.
+      child: YoutubePlayerEmbed(
+        key: ValueKey(widget.videoId),
+        videoId: widget.videoId,
+        // Never autoplay — the user may be mid-set with the sound up.
+        autoPlay: false,
+        hidenVideoControls: false,
+        mute: false,
         aspectRatio: 16 / 9,
-        child: YoutubeValueBuilder(
-          controller: _controller,
-          builder: (context, value) {
-            // Some videos — Shorts especially — allow the oEmbed lookup but
-            // still refuse playback inside an embedded player. Offer a way
-            // out instead of leaving YouTube's dead-end error box.
-            if (value.error != YoutubeError.none) {
-              return _UnplayablePanel(onOpen: _openInYouTube);
-            }
-            return YoutubePlayer(controller: _controller);
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _UnplayablePanel extends StatelessWidget {
-  const _UnplayablePanel({required this.onOpen});
-
-  final VoidCallback onOpen;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      color: scheme.surfaceContainerHighest,
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.videocam_off_rounded,
-              size: 30, color: scheme.onSurfaceVariant),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            "This video can't play inside the app",
-            style: Theme.of(context).textTheme.titleSmall,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'Its owner restricted embedding.',
-            style: Theme.of(context).textTheme.labelSmall,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          FilledButton.icon(
-            onPressed: onOpen,
-            icon: const Icon(Icons.open_in_new_rounded, size: 18),
-            label: const Text('Watch on YouTube'),
-          ),
-        ],
       ),
     );
   }
