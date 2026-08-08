@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
 import '../../../../core/domain/youtube_url_parser.dart';
 import '../../../../core/models/exercise.dart';
@@ -36,14 +37,17 @@ class ExerciseVideo extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _VideoThumbnail(
-          videoId: videoId,
-          muscleToken: exercise.imagePlaceholder,
-          onTap: () => _openOnYouTube(context, videoId),
-        ),
+        _EmbeddedPlayer(key: ValueKey(videoId), videoId: videoId),
         Wrap(
           alignment: WrapAlignment.end,
           children: [
+            // Kept as an escape hatch: if a video refuses to play embedded,
+            // this always works.
+            TextButton.icon(
+              onPressed: () => _openOnYouTube(context, videoId),
+              icon: const Icon(Icons.open_in_new_rounded, size: 16),
+              label: const Text('Open in YouTube'),
+            ),
             TextButton.icon(
               onPressed: () => showVideoDialog(context, ref, exercise),
               icon: const Icon(Icons.edit_outlined, size: 16),
@@ -88,18 +92,44 @@ Future<void> _openOnYouTube(BuildContext context, String videoId) async {
   }
 }
 
-/// YouTube thumbnail with a play badge. Falls back to the muscle-group
-/// gradient when the image can't load (offline, or a deleted video).
-class _VideoThumbnail extends StatelessWidget {
-  const _VideoThumbnail({
-    required this.videoId,
-    required this.muscleToken,
-    required this.onTap,
-  });
+/// Inline YouTube player.
+///
+/// youtube_player_iframe 6.x is the first version whose referrer handling
+/// works in an Android WebView here — 5.2.2 hard-coded an origin and was
+/// rejected with error 152-4. It also needs Dart 3.10+, which is why the
+/// Flutter SDK had to be upgraded before this could be used.
+class _EmbeddedPlayer extends StatefulWidget {
+  const _EmbeddedPlayer({super.key, required this.videoId});
 
   final String videoId;
-  final String muscleToken;
-  final VoidCallback onTap;
+
+  @override
+  State<_EmbeddedPlayer> createState() => _EmbeddedPlayerState();
+}
+
+class _EmbeddedPlayerState extends State<_EmbeddedPlayer> {
+  late final YoutubePlayerController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = YoutubePlayerController.fromVideoId(
+      videoId: widget.videoId,
+      // Never autoplay — the user may be mid-set with the sound up.
+      autoPlay: false,
+      params: const YoutubePlayerParams(
+        showControls: true,
+        showFullscreenButton: true,
+        strictRelatedVideos: true,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.close();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -107,67 +137,7 @@ class _VideoThumbnail extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppRadius.xl),
       child: AspectRatio(
         aspectRatio: 16 / 9,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.network(
-              'https://img.youtube.com/vi/$videoId/hqdefault.jpg',
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stack) => DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: AppColors.muscleGradient(muscleToken),
-                ),
-                child: Icon(
-                  ExerciseAvatar.iconFor(muscleToken),
-                  size: 64,
-                  color: Colors.white.withValues(alpha: 0.35),
-                ),
-              ),
-              loadingBuilder: (context, child, progress) => progress == null
-                  ? child
-                  : DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: AppColors.muscleGradient(muscleToken),
-                      ),
-                    ),
-            ),
-            // Scrim so the play badge stays legible on bright thumbnails.
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.28),
-              ),
-            ),
-            Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xl, vertical: AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.62),
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.play_arrow_rounded,
-                        size: 26, color: Colors.white),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text(
-                      'Watch on YouTube',
-                      style: Theme.of(context)
-                          .textTheme
-                          .labelLarge
-                          ?.copyWith(color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Material(
-              color: Colors.transparent,
-              child: InkWell(onTap: onTap),
-            ),
-          ],
-        ),
+        child: YoutubePlayer(controller: _controller),
       ),
     );
   }

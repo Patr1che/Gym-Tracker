@@ -10,6 +10,7 @@ import 'package:gym_tracker/core/theme/app_theme.dart';
 import 'package:gym_tracker/core/widgets/gradient_background.dart';
 import 'package:gym_tracker/features/auth/presentation/auth_controller.dart';
 import 'package:gym_tracker/features/auth/presentation/screens/forgot_password_screen.dart';
+import 'package:gym_tracker/features/exercises/presentation/exercise_providers.dart';
 import 'package:gym_tracker/features/exercises/presentation/screens/exercise_detail_screen.dart';
 import 'package:gym_tracker/features/history/presentation/history_screen.dart';
 import 'package:gym_tracker/features/history/presentation/workout_detail_screen.dart';
@@ -119,6 +120,11 @@ void main() {
         metaBoxProvider.overrideWithValue(meta),
         measurementRepositoryProvider.overrideWithValue(measurementRepo),
         workoutLogRepositoryProvider.overrideWithValue(logRepo),
+        // The inline player is a WebView with no platform implementation
+        // under `flutter test`. This sweep catches layout overflows, and the
+        // player is a fixed-aspect-ratio box that cannot overflow, so render
+        // the no-video panel instead.
+        effectiveVideoIdProvider.overrideWith((ref, id) => null),
       ];
 
   /// Pumps [screen] at phone width and fails on any layout overflow.
