@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:youtube_player_embed/youtube_player_embed.dart';
 
 import '../../../../core/domain/youtube_url_parser.dart';
 import '../../../../core/models/exercise.dart';
@@ -14,10 +13,15 @@ import '../exercise_providers.dart';
 
 /// Video section of the exercise detail screen.
 ///
-/// Plays in-app when a video id is set — either seeded or attached by the
-/// user. Otherwise it offers to attach one, or to search YouTube. The
-/// embedded player can only load a specific video, since YouTube removed
-/// `listType=search` support in 2020.
+/// Shows the video's thumbnail and hands playback to the YouTube app on tap.
+///
+/// Embedded playback was tried twice — youtube_player_iframe (HTML injected
+/// into a WebView) and youtube_player_embed (InAppWebView). Both were
+/// rejected by YouTube with referrer errors 152-4 and 153 on every video,
+/// and the second crashed on Android. The videos themselves are fine
+/// (`playableInEmbed` is true), so this is a WebView limitation, not a
+/// content restriction. Opening YouTube directly is reliable and gives
+/// proper fullscreen controls.
 class ExerciseVideo extends ConsumerWidget {
   const ExerciseVideo({super.key, required this.exercise});
 
@@ -32,18 +36,14 @@ class ExerciseVideo extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _EmbeddedPlayer(key: ValueKey(videoId), videoId: videoId),
-        const SizedBox(height: AppSpacing.sm),
+        _VideoThumbnail(
+          videoId: videoId,
+          muscleToken: exercise.imagePlaceholder,
+          onTap: () => _openOnYouTube(context, videoId),
+        ),
         Wrap(
           alignment: WrapAlignment.end,
           children: [
-            // Always available: some videos refuse to play embedded, and
-            // this is the way out when that happens.
-            TextButton.icon(
-              onPressed: () => _openOnYouTube(context, videoId),
-              icon: const Icon(Icons.open_in_new_rounded, size: 16),
-              label: const Text('Open in YouTube'),
-            ),
             TextButton.icon(
               onPressed: () => showVideoDialog(context, ref, exercise),
               icon: const Icon(Icons.edit_outlined, size: 16),
@@ -54,9 +54,7 @@ class ExerciseVideo extends ConsumerWidget {
                 final confirmed = await showConfirmDialog(
                   context,
                   title: 'Remove video?',
-                  message:
-                      'The player is removed for this exercise. You can add '
-                      'another any time.',
+                  message: 'You can add another any time.',
                   confirmLabel: 'Remove',
                   destructive: true,
                 );
@@ -87,6 +85,158 @@ Future<void> _openOnYouTube(BuildContext context, String videoId) async {
     );
   } catch (_) {
     if (context.mounted) showErrorSnack(context, 'Could not open YouTube.');
+  }
+}
+
+/// YouTube thumbnail with a play badge. Falls back to the muscle-group
+/// gradient when the image can't load (offline, or a deleted video).
+class _VideoThumbnail extends StatelessWidget {
+  const _VideoThumbnail({
+    required this.videoId,
+    required this.muscleToken,
+    required this.onTap,
+  });
+
+  final String videoId;
+  final String muscleToken;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.xl),
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
+              'https://img.youtube.com/vi/$videoId/hqdefault.jpg',
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stack) => DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: AppColors.muscleGradient(muscleToken),
+                ),
+                child: Icon(
+                  ExerciseAvatar.iconFor(muscleToken),
+                  size: 64,
+                  color: Colors.white.withValues(alpha: 0.35),
+                ),
+              ),
+              loadingBuilder: (context, child, progress) => progress == null
+                  ? child
+                  : DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: AppColors.muscleGradient(muscleToken),
+                      ),
+                    ),
+            ),
+            // Scrim so the play badge stays legible on bright thumbnails.
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.28),
+              ),
+            ),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xl, vertical: AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.62),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.play_arrow_rounded,
+                        size: 26, color: Colors.white),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      'Watch on YouTube',
+                      style: Theme.of(context)
+                          .textTheme
+                          .labelLarge
+                          ?.copyWith(color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(onTap: onTap),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Gradient panel offering to attach a video or search YouTube.
+class _NoVideoPanel extends ConsumerWidget {
+  const _NoVideoPanel({required this.exercise});
+
+  final Exercise exercise;
+
+  Future<void> _openSearch(BuildContext context) async {
+    final uri = Uri.https('www.youtube.com', '/results', {
+      'search_query': exercise.videoSearchQuery,
+    });
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      if (context.mounted) showErrorSnack(context, 'Could not open YouTube.');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          height: 190,
+          decoration: BoxDecoration(
+            gradient: AppColors.muscleGradient(exercise.imagePlaceholder),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Icon(
+                ExerciseAvatar.iconFor(exercise.imagePlaceholder),
+                size: 72,
+                color: Colors.white.withValues(alpha: 0.3),
+              ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _PillButton(
+                    icon: Icons.add_link_rounded,
+                    label: 'Add video',
+                    onTap: () => showVideoDialog(context, ref, exercise),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  _PillButton(
+                    icon: Icons.search_rounded,
+                    label: 'Find on YouTube',
+                    subdued: true,
+                    onTap: () => _openSearch(context),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          'Paste any YouTube link — including a Short — to show it here.',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.labelSmall,
+        ),
+      ],
+    );
   }
 }
 
@@ -133,8 +283,7 @@ Future<void> showVideoDialog(
           ),
           TextButton(
             onPressed: () {
-              final id = YouTubeUrlParser.extractId(controller.text);
-              if (id == null) {
+              if (YouTubeUrlParser.extractId(controller.text) == null) {
                 setState(() => errorText =
                     'That does not look like a YouTube video link.');
                 return;
@@ -156,110 +305,6 @@ Future<void> showVideoDialog(
       .read(exerciseVideoControllerProvider.notifier)
       .setVideo(exercise.id, id);
   if (context.mounted) showSuccessSnack(context, 'Video added');
-}
-
-class _EmbeddedPlayer extends StatefulWidget {
-  const _EmbeddedPlayer({super.key, required this.videoId});
-
-  final String videoId;
-
-  @override
-  State<_EmbeddedPlayer> createState() => _EmbeddedPlayerState();
-}
-
-class _EmbeddedPlayerState extends State<_EmbeddedPlayer> {
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadius.xl),
-      // Loads https://www.youtube.com/embed/<id> as a real URL, so YouTube
-      // sees a valid referrer. Injecting player HTML into a WebView instead
-      // makes YouTube reject restricted videos with error 152-4.
-      child: YoutubePlayerEmbed(
-        key: ValueKey(widget.videoId),
-        videoId: widget.videoId,
-        // Never autoplay — the user may be mid-set with the sound up.
-        autoPlay: false,
-        hidenVideoControls: false,
-        mute: false,
-        aspectRatio: 16 / 9,
-      ),
-    );
-  }
-}
-
-/// Gradient panel offering to attach a video or search YouTube.
-class _NoVideoPanel extends ConsumerWidget {
-  const _NoVideoPanel({required this.exercise});
-
-  final Exercise exercise;
-
-  Future<void> _openSearch(BuildContext context) async {
-    final uri = Uri.https('www.youtube.com', '/results', {
-      'search_query': exercise.videoSearchQuery,
-    });
-    try {
-      final launched =
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!launched && context.mounted) {
-        showErrorSnack(context, 'Could not open YouTube.');
-      }
-    } catch (_) {
-      if (context.mounted) {
-        showErrorSnack(
-            context, 'Could not open YouTube — reinstall the app and retry.');
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          height: 190,
-          decoration: BoxDecoration(
-            gradient: AppColors.muscleGradient(exercise.imagePlaceholder),
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Icon(
-                ExerciseAvatar.iconFor(exercise.imagePlaceholder),
-                size: 72,
-                color: Colors.white.withValues(alpha: 0.3),
-              ),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _PillButton(
-                    icon: Icons.add_link_rounded,
-                    label: 'Add video',
-                    onTap: () => showVideoDialog(context, ref, exercise),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  _PillButton(
-                    icon: Icons.search_rounded,
-                    label: 'Find on YouTube',
-                    subdued: true,
-                    onTap: () => _openSearch(context),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        Text(
-          'Paste any YouTube link — including a Short — to play it here.',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.labelSmall,
-        ),
-      ],
-    );
-  }
 }
 
 class _PillButton extends StatelessWidget {
