@@ -11,6 +11,7 @@ abstract final class HiveBoxes {
   static const String activeSession = 'active_session';
   static const String measurements = 'measurements';
   static const String exerciseVideos = 'exercise_videos';
+  static const String customPrograms = 'custom_programs';
   static const String meta = 'meta';
 
   static const List<String> all = [
@@ -24,6 +25,7 @@ abstract final class HiveBoxes {
     activeSession,
     measurements,
     exerciseVideos,
+    customPrograms,
     meta,
   ];
 }

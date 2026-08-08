@@ -15,6 +15,7 @@ import '../../../core/widgets/selectable_chip.dart';
 import '../../exercises/presentation/exercise_providers.dart';
 import '../../shell/presentation/app_shell.dart';
 import '../../workout_session/presentation/session_controller.dart';
+import 'custom_program_controller.dart';
 import 'program_providers.dart';
 
 class ProgramDetailScreen extends ConsumerStatefulWidget {
@@ -50,7 +51,10 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final program = ref.watch(programByIdProvider(widget.programId));
+    final isCustom = isCustomProgramId(widget.programId);
+    final program = isCustom
+        ? ref.watch(customProgramByIdProvider(widget.programId))
+        : ref.watch(programByIdProvider(widget.programId));
     if (program == null) {
       return Scaffold(
         backgroundColor: Colors.transparent,
@@ -65,7 +69,42 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(title: Text(program.name)),
+      appBar: AppBar(
+        title: Text(program.name),
+        actions: [
+          if (isCustom) ...[
+            IconButton(
+              tooltip: 'Edit program',
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: () => context.go(Routes.editProgram(program.id)),
+            ),
+            IconButton(
+              tooltip: 'Delete program',
+              icon: const Icon(Icons.delete_outline_rounded),
+              onPressed: () async {
+                final confirmed = await showConfirmDialog(
+                  context,
+                  title: 'Delete ${program.name}?',
+                  message: 'This program will be permanently removed. '
+                      'Your logged workouts are kept.',
+                  confirmLabel: 'Delete',
+                  destructive: true,
+                );
+                if (!confirmed) return;
+                await ref
+                    .read(customProgramsProvider.notifier)
+                    .delete(program.id);
+                if (context.mounted) context.go(Routes.workouts);
+              },
+            ),
+          ] else
+            IconButton(
+              tooltip: 'Copy and customize',
+              icon: const Icon(Icons.copy_all_outlined),
+              onPressed: () => context.go(Routes.copyProgram(program.id)),
+            ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(AppSpacing.screenH, 0,
             AppSpacing.screenH, kBottomNavClearance),

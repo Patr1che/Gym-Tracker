@@ -17,6 +17,7 @@ import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/profile/presentation/edit_profile_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/programs/presentation/program_detail_screen.dart';
+import '../../features/programs/presentation/screens/program_editor_screen.dart';
 import '../../features/programs/presentation/programs_screen.dart';
 import '../../features/progress/presentation/progress_screen.dart';
 import '../../features/settings/presentation/screens/static_pages.dart';
@@ -97,6 +98,20 @@ final routerProvider = Provider<GoRouter>((ref) {
                           exerciseId: state.pathParameters['id']!),
                     ),
                   ],
+                ),
+                GoRoute(
+                  path: 'program-new',
+                  builder: (context, state) => const ProgramEditorScreen(),
+                ),
+                GoRoute(
+                  path: 'program-edit/:id',
+                  builder: (context, state) =>
+                      ProgramEditorScreen(programId: state.pathParameters['id']),
+                ),
+                GoRoute(
+                  path: 'program-copy/:id',
+                  builder: (context, state) => ProgramEditorScreen(
+                      copyFromId: state.pathParameters['id']),
                 ),
                 GoRoute(
                   path: 'program/:id',

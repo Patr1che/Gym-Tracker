@@ -24,4 +24,6 @@ final measurementsBoxProvider =
     Provider<JsonBox>((ref) => _open(HiveBoxes.measurements));
 final exerciseVideosBoxProvider =
     Provider<JsonBox>((ref) => _open(HiveBoxes.exerciseVideos));
+final customProgramsBoxProvider =
+    Provider<JsonBox>((ref) => _open(HiveBoxes.customPrograms));
 final metaBoxProvider = Provider<JsonBox>((ref) => _open(HiveBoxes.meta));

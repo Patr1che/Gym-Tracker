@@ -113,6 +113,7 @@ void main() {
         settingsBoxProvider.overrideWithValue(FakeJsonBox()),
         favoritesBoxProvider.overrideWithValue(FakeJsonBox()),
         exerciseVideosBoxProvider.overrideWithValue(FakeJsonBox()),
+        customProgramsBoxProvider.overrideWithValue(FakeJsonBox()),
         activeSessionBoxProvider.overrideWithValue(FakeJsonBox()),
         measurementsBoxProvider.overrideWithValue(FakeJsonBox()),
         exercisesBoxProvider.overrideWithValue(exercises),

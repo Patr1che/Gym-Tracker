@@ -10,6 +10,7 @@ import '../../../core/widgets/difficulty_badge.dart';
 import '../../../core/widgets/glass_card.dart';
 import '../../../core/widgets/section_header.dart';
 import '../../shell/presentation/app_shell.dart';
+import 'custom_program_controller.dart';
 import 'program_providers.dart';
 
 class ProgramsScreen extends ConsumerWidget {
@@ -18,6 +19,7 @@ class ProgramsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final programs = ref.watch(programListProvider);
+    final myPrograms = ref.watch(customProgramsProvider);
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: RefreshIndicator(
@@ -72,7 +74,41 @@ class ProgramsScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            const SectionHeader(title: 'Training programs'),
+            SectionHeader(
+              title: 'My programs',
+              actionLabel: 'Create',
+              onAction: () => context.go(Routes.newProgram),
+            ),
+            if (myPrograms.isEmpty)
+              GlassCard(
+                onTap: () => context.go(Routes.newProgram),
+                child: Row(
+                  children: [
+                    Icon(Icons.add_circle_outline_rounded,
+                        color: Theme.of(context).colorScheme.primary),
+                    const SizedBox(width: AppSpacing.lg),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Build your own program',
+                              style: Theme.of(context).textTheme.titleMedium),
+                          const SizedBox(height: 2),
+                          Text('Pick exercises, sets, reps and rest.',
+                              style: Theme.of(context).textTheme.bodySmall),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              for (final program in myPrograms)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: _ProgramCard(program: program),
+                ),
+            const SectionHeader(title: 'Built-in programs'),
             for (final program in programs)
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.md),

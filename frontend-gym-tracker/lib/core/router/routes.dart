@@ -10,6 +10,9 @@ abstract final class Routes {
   static const exerciseLibrary = '/workouts/exercises';
   static String exerciseDetail(String id) => '/workouts/exercises/$id';
   static String programDetail(String id) => '/workouts/program/$id';
+  static const newProgram = '/workouts/program-new';
+  static String editProgram(String id) => '/workouts/program-edit/$id';
+  static String copyProgram(String id) => '/workouts/program-copy/$id';
 
   static const progress = '/progress';
   static const measurements = '/progress/measurements';
