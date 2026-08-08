@@ -1,0 +1,35 @@
+# Monorepo root ignores.
+# frontend-gym-tracker/ has Flutter's own .gitignore for build/ and .dart_tool/.
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Secrets — never commit these. Set real values in the host's env-var UI.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.keystore
+*.jks
+key.properties
+local.properties
+
+# Java / Spring backend (once scaffolded)
+backend-gym-tracker/target/
+backend-gym-tracker/.gradle/
+backend-gym-tracker/build/
+backend-gym-tracker/out/
+backend-gym-tracker/.mvn/wrapper/maven-wrapper.jar
+
+# Logs
+*.log
