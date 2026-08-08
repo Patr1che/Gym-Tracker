@@ -67,7 +67,7 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Using a partial range of motion with too much weight',
     ],
     'imagePlaceholder': 'chest',
-    'videoId': 'pLofEAcfsO8',
+    'videoId': 'YXjhMV7uz4c',
   },
   {
     'id': 'ex_chest_fly',

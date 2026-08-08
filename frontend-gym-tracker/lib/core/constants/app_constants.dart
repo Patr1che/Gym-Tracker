@@ -2,7 +2,8 @@
 /// otherwise existing installs never receive the update.
 abstract final class AppConstants {
   /// v2 added curated YouTube videoIds to exercises.
-  static const int seedVersion = 2;
+  /// v3 swapped the Machine Chest Press demo for a clearer Short.
+  static const int seedVersion = 3;
 
   /// MET value for general strength training — used for calorie estimates.
   static const double strengthTrainingMet = 5.0;
