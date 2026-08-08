@@ -21,7 +21,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Lifting the hips off the bench during the press',
     ],
     'imagePlaceholder': 'chest',
-    'videoId': 'vcBig73ojpE',
   },
   {
     'id': 'ex_incline_db_press',
@@ -44,7 +43,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Letting the elbows drift too wide at the bottom',
     ],
     'imagePlaceholder': 'chest',
-    'videoId': 'awEEyL5zGvU',
   },
   {
     'id': 'ex_chest_press',
@@ -67,7 +65,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Using a partial range of motion with too much weight',
     ],
     'imagePlaceholder': 'chest',
-    'videoId': 'YXjhMV7uz4c',
   },
   {
     'id': 'ex_chest_fly',
@@ -90,7 +87,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Banging the dumbbells together at the top',
     ],
     'imagePlaceholder': 'chest',
-    'videoId': 'QENKPHhQVi4',
   },
   {
     'id': 'ex_cable_crossover',
@@ -113,7 +109,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Letting the shoulders roll forward at the finish',
     ],
     'imagePlaceholder': 'chest',
-    'videoId': 'XY6JrX1wyxk',
   },
   {
     'id': 'ex_push_up',
@@ -136,7 +131,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Flaring the elbows straight out to the sides',
     ],
     'imagePlaceholder': 'chest',
-    'videoId': 'WDIpL0pjun0',
   },
   {
     'id': 'ex_chest_dip',
@@ -159,7 +153,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Swinging the legs to generate momentum',
     ],
     'imagePlaceholder': 'chest',
-    'videoId': 'yN6Q1UI_xkE',
   },
   // ----------------------------------------------------------------- Back (8)
   {
@@ -183,7 +176,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Hyperextending the back at lockout',
     ],
     'imagePlaceholder': 'back',
-    'videoId': 'VL5Ab0T07e4',
   },
   {
     'id': 'ex_lat_pulldown',
@@ -206,7 +198,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Using momentum instead of a controlled tempo',
     ],
     'imagePlaceholder': 'back',
-    'videoId': 'Z_3xHwuO8Tk',
   },
   {
     'id': 'ex_seated_row',
@@ -229,7 +220,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Rounding the back in the stretched position',
     ],
     'imagePlaceholder': 'back',
-    'videoId': '7BkgqzC6WsM',
   },
   {
     'id': 'ex_pull_up',
@@ -252,7 +242,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Only lowering halfway between reps',
     ],
     'imagePlaceholder': 'back',
-    'videoId': 'rmdn5X_KLkY',
   },
   {
     'id': 'ex_bent_over_row',
@@ -275,7 +264,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Standing too upright and turning it into a shrug',
     ],
     'imagePlaceholder': 'back',
-    'videoId': 'YcK7pyFXmWk',
   },
   {
     'id': 'ex_face_pull',
@@ -298,7 +286,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Letting the elbows drop below the wrists',
     ],
     'imagePlaceholder': 'back',
-    'videoId': 'rep-qVOkqgk',
   },
   {
     'id': 'ex_single_arm_db_row',
@@ -321,7 +308,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Cutting the stretch short at the bottom',
     ],
     'imagePlaceholder': 'back',
-    'videoId': 'gfUg6qWohTk',
   },
   {
     'id': 'ex_back_extension',
@@ -344,7 +330,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Placing the pad too high and restricting the hinge',
     ],
     'imagePlaceholder': 'back',
-    'videoId': 'qtjJUWCnDyE',
   },
   // ------------------------------------------------------------ Shoulders (6)
   {
@@ -368,7 +353,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Stopping short of full lockout overhead',
     ],
     'imagePlaceholder': 'shoulders',
-    'videoId': 'a81SaIpjGlA',
   },
   {
     'id': 'ex_lateral_raise',
@@ -391,7 +375,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Going so heavy that the range of motion shrinks',
     ],
     'imagePlaceholder': 'shoulders',
-    'videoId': 'Y29xKcze8Ik',
   },
   {
     'id': 'ex_front_raise',
@@ -414,7 +397,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Letting the weights drop instead of lowering under control',
     ],
     'imagePlaceholder': 'shoulders',
-    'videoId': 'CH9JzDStL3U',
   },
   {
     'id': 'ex_rear_delt_fly',
@@ -437,7 +419,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Pulling the elbows back into a row',
     ],
     'imagePlaceholder': 'shoulders',
-    'videoId': 'p7YER_nABrI',
   },
   {
     'id': 'ex_arnold_press',
@@ -460,7 +441,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Rushing the lowering phase',
     ],
     'imagePlaceholder': 'shoulders',
-    'videoId': '6Z15_WdXmVw',
   },
   {
     'id': 'ex_upright_row',
@@ -483,7 +463,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Swinging the torso to heave the bar up',
     ],
     'imagePlaceholder': 'shoulders',
-    'videoId': 'jaAV-rD45I0',
   },
   // ----------------------------------------------------------------- Arms (8)
   {
@@ -507,7 +486,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Only lowering the bar halfway between reps',
     ],
     'imagePlaceholder': 'arms',
-    'videoId': 'QZEqB6wUPxQ',
   },
   {
     'id': 'ex_hammer_curl',
@@ -530,7 +508,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Rushing reps with a shortened range of motion',
     ],
     'imagePlaceholder': 'arms',
-    'videoId': 'zC3nLlEvin4',
   },
   {
     'id': 'ex_preacher_curl',
@@ -553,7 +530,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Cutting the lowering phase short',
     ],
     'imagePlaceholder': 'arms',
-    'videoId': 'BPmUhDtdQfw',
   },
   {
     'id': 'ex_concentration_curl',
@@ -576,7 +552,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Using a weight too heavy to control strictly',
     ],
     'imagePlaceholder': 'arms',
-    'videoId': '0AUGkch3tzc',
   },
   {
     'id': 'ex_triceps_pushdown',
@@ -599,7 +574,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Using momentum instead of a strict tempo',
     ],
     'imagePlaceholder': 'arms',
-    'videoId': '_w-HpW70nSQ',
   },
   {
     'id': 'ex_overhead_triceps_extension',
@@ -622,7 +596,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Cutting the stretch short at the bottom',
     ],
     'imagePlaceholder': 'arms',
-    'videoId': 'fYqswDVbJDg',
   },
   {
     'id': 'ex_skull_crusher',
@@ -645,7 +618,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Going too heavy and losing control near the face',
     ],
     'imagePlaceholder': 'arms',
-    'videoId': 'RavQHfFxbdA',
   },
   {
     'id': 'ex_close_grip_bench',
@@ -668,7 +640,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Bouncing the bar off the chest',
     ],
     'imagePlaceholder': 'arms',
-    'videoId': 'UYJsFzqdgK4',
   },
   // ---------------------------------------------------------------- Legs (10)
   {
@@ -692,7 +663,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Cutting depth well above parallel',
     ],
     'imagePlaceholder': 'legs',
-    'videoId': 'f-KL4VNN96E',
   },
   {
     'id': 'ex_romanian_deadlift',
@@ -715,7 +685,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Letting the bar drift away from the legs',
     ],
     'imagePlaceholder': 'legs',
-    'videoId': 'uhghy9pFIPY',
   },
   {
     'id': 'ex_leg_press',
@@ -738,7 +707,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Loading maximum weight and using tiny partial reps',
     ],
     'imagePlaceholder': 'legs',
-    'videoId': 'K5n2vg3oZa4',
   },
   {
     'id': 'ex_leg_curl',
@@ -761,7 +729,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Stopping well short of full knee extension',
     ],
     'imagePlaceholder': 'legs',
-    'videoId': 'lUH80pneL5w',
   },
   {
     'id': 'ex_leg_extension',
@@ -784,7 +751,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Letting the stack slam down between reps',
     ],
     'imagePlaceholder': 'legs',
-    'videoId': 'tTbJBUKnWU8',
   },
   {
     'id': 'ex_calf_raise',
@@ -807,7 +773,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Bending the knees to help press the weight up',
     ],
     'imagePlaceholder': 'legs',
-    'videoId': '97NbelB5yvQ',
   },
   {
     'id': 'ex_lunge',
@@ -830,7 +795,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Leaning the torso far forward on each step',
     ],
     'imagePlaceholder': 'legs',
-    'videoId': 'vYfp2t4XgqQ',
   },
   {
     'id': 'ex_bulgarian_split_squat',
@@ -853,7 +817,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Wobbling due to too much load too soon',
     ],
     'imagePlaceholder': 'legs',
-    'videoId': 'hiLF_pF3EJM',
   },
   {
     'id': 'ex_hip_thrust',
@@ -876,7 +839,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Bouncing reps without a pause at the top',
     ],
     'imagePlaceholder': 'legs',
-    'videoId': 'S_uZP4UH6J0',
   },
   {
     'id': 'ex_goblet_squat',
@@ -899,7 +861,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Rising onto the toes at the bottom',
     ],
     'imagePlaceholder': 'legs',
-    'videoId': 'BR4tlEE_A98',
   },
   // ----------------------------------------------------------------- Core (6)
   {
@@ -923,7 +884,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Craning the neck up instead of keeping it neutral',
     ],
     'imagePlaceholder': 'core',
-    'videoId': 'mwlp75MS6Rg',
   },
   {
     'id': 'ex_crunch',
@@ -946,7 +906,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Rushing reps without squeezing the abs',
     ],
     'imagePlaceholder': 'core',
-    'videoId': 'M6yAoJJQvGY',
   },
   {
     'id': 'ex_russian_twist',
@@ -969,7 +928,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Moving so fast that the range of motion shrinks',
     ],
     'imagePlaceholder': 'core',
-    'videoId': 'fCHFQTBqm-U',
   },
   {
     'id': 'ex_leg_raise',
@@ -992,7 +950,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Letting the body sway between reps',
     ],
     'imagePlaceholder': 'core',
-    'videoId': 'vwl68EF9M2Q',
   },
   {
     'id': 'ex_mountain_climber',
@@ -1015,7 +972,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Sacrificing form for maximum speed',
     ],
     'imagePlaceholder': 'core',
-    'videoId': 'De3Gl-nC7IQ',
   },
   {
     'id': 'ex_dead_bug',
@@ -1039,7 +995,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Holding the breath through the reps',
     ],
     'imagePlaceholder': 'core',
-    'videoId': 'bxn9FBrt4-A',
   },
   // --------------------------------------------------------------- Cardio (5)
   {
@@ -1063,7 +1018,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Jumping straight to a fast pace without warming up',
     ],
     'imagePlaceholder': 'cardio',
-    'videoId': '76XnbF5DBFY',
   },
   {
     'id': 'ex_cycling',
@@ -1087,7 +1041,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Slumping over the handlebars with a rounded back',
     ],
     'imagePlaceholder': 'cardio',
-    'videoId': 'rlOOqDgDU3U',
   },
   {
     'id': 'ex_rowing_machine',
@@ -1110,7 +1063,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Setting the damper at maximum and burning out early',
     ],
     'imagePlaceholder': 'cardio',
-    'videoId': '4zWu1yuJ0_g',
   },
   {
     'id': 'ex_jump_rope',
@@ -1133,7 +1085,6 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Landing flat-footed on the heels',
     ],
     'imagePlaceholder': 'cardio',
-    'videoId': 'nMHfZ-yrFjA',
   },
   {
     'id': 'ex_elliptical',
@@ -1156,6 +1107,5 @@ final List<Map<String, dynamic>> exerciseSeeds = [
       'Slouching forward over the console',
     ],
     'imagePlaceholder': 'cardio',
-    'videoId': 'sHMemwz_HPU',
   },
 ];

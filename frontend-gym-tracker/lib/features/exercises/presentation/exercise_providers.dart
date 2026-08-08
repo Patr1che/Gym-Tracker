@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/models/enums.dart';
 import '../../../core/models/exercise.dart';
 import '../../../core/persistence/hive_boxes_provider.dart';
+import '../../../core/persistence/video_catalog.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../data/hive_exercise_repository.dart';
 import '../domain/exercise_repository.dart';
@@ -105,11 +106,14 @@ final exerciseVideoControllerProvider =
     NotifierProvider<ExerciseVideoController, Map<String, String>>(
         ExerciseVideoController.new);
 
-/// The video actually shown for an exercise: the user's own choice if they
-/// set one, otherwise whatever the seed data ships.
+/// The video shown for an exercise, most specific source first:
+/// the user's own choice, then assets/exercise_videos.json, then any
+/// videoId still carried on the exercise record.
 final effectiveVideoIdProvider = Provider.family<String?, String>((ref, id) {
   final override = ref.watch(exerciseVideoControllerProvider)[id];
   if (override != null && override.isNotEmpty) return override;
+  final catalogued = ref.watch(videoCatalogProvider)[id];
+  if (catalogued != null && catalogued.isNotEmpty) return catalogued;
   final seeded = ref.watch(exerciseByIdProvider(id))?.videoId;
   return (seeded != null && seeded.isNotEmpty) ? seeded : null;
 });
