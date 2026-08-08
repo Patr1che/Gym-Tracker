@@ -1,7 +1,8 @@
 /// App-wide constants. Bump [seedVersion] whenever seed data changes,
 /// otherwise existing installs never receive the update.
 abstract final class AppConstants {
-  static const int seedVersion = 1;
+  /// v2 added curated YouTube videoIds to exercises.
+  static const int seedVersion = 2;
 
   /// MET value for general strength training — used for calorie estimates.
   static const double strengthTrainingMet = 5.0;

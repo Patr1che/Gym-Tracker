@@ -71,6 +71,49 @@ class FavoritesController extends Notifier<Set<String>> {
 final favoritesControllerProvider =
     NotifierProvider<FavoritesController, Set<String>>(FavoritesController.new);
 
+/// Per-user YouTube video ids, keyed by exercise id. These override whatever
+/// the seed data ships, so a user can attach their own demo for any exercise.
+class ExerciseVideoController extends Notifier<Map<String, String>> {
+  @override
+  Map<String, String> build() {
+    final userId =
+        ref.watch(authControllerProvider.select((a) => a.user?.id));
+    if (userId == null) return const {};
+    final json = ref.read(exerciseVideosBoxProvider).get(userId);
+    final videos = json?['videos'] as Map<String, dynamic>?;
+    return videos == null ? const {} : videos.cast<String, String>();
+  }
+
+  Future<void> setVideo(String exerciseId, String videoId) =>
+      _write({...state, exerciseId: videoId});
+
+  Future<void> removeVideo(String exerciseId) =>
+      _write({...state}..remove(exerciseId));
+
+  Future<void> _write(Map<String, String> next) async {
+    state = next;
+    final userId = ref.read(authControllerProvider).user?.id;
+    if (userId != null) {
+      await ref
+          .read(exerciseVideosBoxProvider)
+          .put(userId, {'videos': next});
+    }
+  }
+}
+
+final exerciseVideoControllerProvider =
+    NotifierProvider<ExerciseVideoController, Map<String, String>>(
+        ExerciseVideoController.new);
+
+/// The video actually shown for an exercise: the user's own choice if they
+/// set one, otherwise whatever the seed data ships.
+final effectiveVideoIdProvider = Provider.family<String?, String>((ref, id) {
+  final override = ref.watch(exerciseVideoControllerProvider)[id];
+  if (override != null && override.isNotEmpty) return override;
+  final seeded = ref.watch(exerciseByIdProvider(id))?.videoId;
+  return (seeded != null && seeded.isNotEmpty) ? seeded : null;
+});
+
 final filteredExercisesProvider = Provider<List<Exercise>>((ref) {
   final all = ref.watch(exerciseListProvider);
   final query = ref.watch(exerciseSearchQueryProvider).trim().toLowerCase();

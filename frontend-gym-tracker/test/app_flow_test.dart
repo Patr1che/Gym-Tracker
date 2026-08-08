@@ -24,6 +24,7 @@ void main() {
   late FakeJsonBox workoutLogs;
   late FakeJsonBox activeSession;
   late FakeJsonBox measurements;
+  late FakeJsonBox exerciseVideos;
   late FakeJsonBox meta;
 
   setUp(() async {
@@ -45,6 +46,7 @@ void main() {
     workoutLogs = FakeJsonBox();
     activeSession = FakeJsonBox();
     measurements = FakeJsonBox();
+    exerciseVideos = FakeJsonBox();
     meta = FakeJsonBox();
 
     await runSeeder(
@@ -61,6 +63,7 @@ void main() {
         workoutLogsBoxProvider.overrideWithValue(workoutLogs),
         activeSessionBoxProvider.overrideWithValue(activeSession),
         measurementsBoxProvider.overrideWithValue(measurements),
+        exerciseVideosBoxProvider.overrideWithValue(exerciseVideos),
         metaBoxProvider.overrideWithValue(meta),
       ];
 

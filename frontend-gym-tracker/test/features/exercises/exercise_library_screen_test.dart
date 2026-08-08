@@ -21,6 +21,7 @@ void main() {
             FakeSessionStore(userId: 'u1', rememberMe: true)),
         settingsRepositoryProvider.overrideWithValue(FakeSettingsRepository()),
         settingsBoxProvider.overrideWithValue(FakeJsonBox()),
+        exerciseVideosBoxProvider.overrideWithValue(FakeJsonBox()),
         favoritesBoxProvider.overrideWithValue(favoritesBox),
         exerciseRepositoryProvider.overrideWithValue(
           FakeExerciseRepository([
