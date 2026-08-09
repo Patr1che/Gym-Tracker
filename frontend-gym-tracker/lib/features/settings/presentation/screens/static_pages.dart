@@ -137,15 +137,25 @@ class AboutScreen extends StatelessWidget {
           Center(
             child: Column(
               children: [
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(AppRadius.xl),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  child: Image.asset(
+                    'assets/logo.png',
+                    width: 96,
+                    height: 96,
+                    fit: BoxFit.cover,
+                    // Falls back to the mark if the asset is ever missing.
+                    errorBuilder: (context, error, stack) => Container(
+                      width: 96,
+                      height: 96,
+                      decoration: BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
+                      ),
+                      child: const Icon(Icons.fitness_center_rounded,
+                          size: 44, color: AppColors.bgDark),
+                    ),
                   ),
-                  child: const Icon(Icons.fitness_center_rounded,
-                      size: 36, color: AppColors.bgDark),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Text('GymTracker',
