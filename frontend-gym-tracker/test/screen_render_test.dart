@@ -10,6 +10,12 @@ import 'package:gym_tracker/core/theme/app_theme.dart';
 import 'package:gym_tracker/core/widgets/gradient_background.dart';
 import 'package:gym_tracker/features/auth/presentation/auth_controller.dart';
 import 'package:gym_tracker/features/auth/presentation/screens/forgot_password_screen.dart';
+import 'package:gym_tracker/features/auth/presentation/screens/login_screen.dart';
+import 'package:gym_tracker/features/auth/presentation/screens/register_screen.dart';
+import 'package:gym_tracker/features/backup/presentation/backup_screen.dart';
+import 'package:gym_tracker/features/exercises/presentation/screens/exercise_library_screen.dart';
+import 'package:gym_tracker/features/onboarding/presentation/onboarding_screen.dart';
+import 'package:gym_tracker/features/programs/presentation/screens/program_editor_screen.dart';
 import 'package:gym_tracker/features/exercises/presentation/exercise_providers.dart';
 import 'package:gym_tracker/features/exercises/presentation/screens/exercise_detail_screen.dart';
 import 'package:gym_tracker/features/history/presentation/history_screen.dart';
@@ -33,10 +39,19 @@ import 'package:gym_tracker/seed/seeder.dart';
 import 'helpers/fake_json_box.dart';
 import 'helpers/test_harness.dart';
 
-/// Renders every screen at phone width with realistic data. Layout overflows
-/// throw in tests, so these catch responsive regressions the feature tests
-/// (which run at the default 800x600) would miss.
+/// Renders every screen with realistic data at both ends of the phone range:
+/// a modern handset and a small 320x640 one. Layout overflows throw in tests,
+/// so this sweep catches responsive regressions the feature tests (which run
+/// at the default 800x600) would miss.
+const _phoneSizes = [Size(430, 932), Size(320, 640)];
+
 void main() {
+  for (final size in _phoneSizes) {
+    group('${size.width.toInt()}x${size.height.toInt()}', () => _screens(size));
+  }
+}
+
+void _screens(Size size) {
   final today = DateTime(2026, 8, 7, 9);
   late FakeJsonBox exercises;
   late FakeJsonBox programs;
@@ -71,7 +86,7 @@ void main() {
   setUp(() async {
     final view =
         TestWidgetsFlutterBinding.instance.platformDispatcher.views.first;
-    view.physicalSize = const Size(430, 932);
+    view.physicalSize = size;
     view.devicePixelRatio = 1.0;
     addTearDown(() {
       view.resetPhysicalSize();
@@ -150,7 +165,9 @@ void main() {
 
   testWidgets('programs list', (tester) async {
     await renders(tester, const ProgramsScreen());
-    expect(find.text('Push Pull Legs'), findsOneWidget);
+    // First card only — on a short screen the rest are below the fold and a
+    // lazy list never builds them.
+    expect(find.text(programSeeds.first['name'] as String), findsOneWidget);
   });
 
   testWidgets('program detail for every seeded program', (tester) async {
@@ -211,13 +228,41 @@ void main() {
   testWidgets('static settings pages', (tester) async {
     await renders(tester, const PrivacyScreen());
     await renders(tester, const TermsScreen());
+
     await renders(tester, const AboutScreen());
-    await renders(tester, const FeedbackScreen());
+    // The credit sits below the fold on a short screen.
+    await tester.dragUntilVisible(
+      find.text('Patriche Gerard Santos'),
+      find.byType(ListView),
+      const Offset(0, -200),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Patriche Gerard Santos'), findsOneWidget);
   });
 
   testWidgets('forgot password', (tester) async {
     await renders(tester, const ForgotPasswordScreen());
     expect(find.text('Reset password'), findsOneWidget);
+  });
+
+  testWidgets('sign in, sign up, and onboarding', (tester) async {
+    await renders(tester, const LoginScreen());
+    expect(find.text('Welcome back'), findsOneWidget);
+
+    await renders(tester, const RegisterScreen());
+    expect(find.text('Create account'), findsOneWidget);
+
+    await renders(tester, const OnboardingScreen());
+  });
+
+  testWidgets('exercise library with its filter chips', (tester) async {
+    await renders(tester, const ExerciseLibraryScreen());
+    expect(find.text('Exercise Library'), findsOneWidget);
+  });
+
+  testWidgets('program editor and backup', (tester) async {
+    await renders(tester, const ProgramEditorScreen());
+    await renders(tester, const BackupScreen());
   });
 
   testWidgets('screens render in light mode too', (tester) async {

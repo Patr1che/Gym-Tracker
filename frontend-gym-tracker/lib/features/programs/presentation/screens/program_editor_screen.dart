@@ -263,6 +263,7 @@ class _ProgramEditorScreenState extends ConsumerState<ProgramEditorScreen> {
                   const SizedBox(height: AppSpacing.md),
                   Wrap(
                     spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
                     children: [
                       for (final d in Difficulty.values)
                         SelectableChip(
@@ -313,7 +314,7 @@ class _ProgramEditorScreenState extends ConsumerState<ProgramEditorScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            Row(
+            Wrap(
               children: [
                 TextButton.icon(
                   onPressed: () => _renameDay(_dayIndex),

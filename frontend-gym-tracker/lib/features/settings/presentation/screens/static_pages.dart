@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/glass_card.dart';
 import '../../../shell/presentation/app_shell.dart';
 
@@ -178,6 +176,19 @@ class AboutScreen extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: AppSpacing.md),
+          GlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Created by',
+                    style: Theme.of(context).textTheme.labelMedium),
+                const SizedBox(height: AppSpacing.xs),
+                Text('Patriche Gerard Santos',
+                    style: Theme.of(context).textTheme.titleMedium),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -213,77 +224,3 @@ class _Feature extends StatelessWidget {
   }
 }
 
-class FeedbackScreen extends StatefulWidget {
-  const FeedbackScreen({super.key});
-
-  @override
-  State<FeedbackScreen> createState() => _FeedbackScreenState();
-}
-
-class _FeedbackScreenState extends State<FeedbackScreen> {
-  final _controller = TextEditingController();
-  bool _sending = false;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Future<void> _send() async {
-    setState(() => _sending = true);
-    await Future<void>.delayed(const Duration(milliseconds: 400));
-    if (!mounted) return;
-    setState(() => _sending = false);
-    _controller.clear();
-    showSuccessSnack(context, 'Thanks for the feedback!');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(title: const Text('Feedback')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.screenH, 0,
-            AppSpacing.screenH, kBottomNavClearance),
-        children: [
-          Text('Tell us what would make GymTracker better.',
-              style: Theme.of(context).textTheme.bodyLarge),
-          const SizedBox(height: AppSpacing.lg),
-          TextField(
-            controller: _controller,
-            maxLines: 6,
-            onChanged: (_) => setState(() {}),
-            decoration: const InputDecoration(
-              hintText: 'What works well? What is missing?',
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          GlassCard(
-            child: Row(
-              children: [
-                const Icon(Icons.info_outline_rounded,
-                    size: 20, color: AppColors.secondary),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Text(
-                    'This MVP has no backend yet, so feedback is stored only '
-                    'in this session. Sending will be enabled with cloud sync.',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          AppButton(
-            label: 'Send feedback',
-            loading: _sending,
-            onPressed: _controller.text.trim().isEmpty ? null : _send,
-          ),
-        ],
-      ),
-    );
-  }
-}

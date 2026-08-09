@@ -121,6 +121,7 @@ class SettingsScreen extends ConsumerWidget {
                       const SizedBox(height: AppSpacing.md),
                       Wrap(
                         spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.sm,
                         children: [
                           for (final unit in Units.values)
                             SelectableChip(
@@ -173,13 +174,8 @@ class SettingsScreen extends ConsumerWidget {
                 _NavRow(
                   icon: Icons.info_outline_rounded,
                   label: 'About GymTracker',
-                  onTap: () => context.go(Routes.settingsPage('about')),
-                ),
-                _NavRow(
-                  icon: Icons.feedback_outlined,
-                  label: 'Send feedback',
                   isLast: true,
-                  onTap: () => context.go(Routes.settingsPage('feedback')),
+                  onTap: () => context.go(Routes.settingsPage('about')),
                 ),
               ],
             ),

@@ -112,16 +112,17 @@ class _HistoryCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          Row(
+          // Wrap, not Row: on a narrow phone the three chips need a second line.
+          Wrap(
+            spacing: AppSpacing.md,
+            runSpacing: AppSpacing.sm,
             children: [
               _Chip(
                   icon: Icons.schedule_rounded,
                   label: formatDurationText(log.durationSec)),
-              const SizedBox(width: AppSpacing.md),
               _Chip(
                   icon: Icons.fitness_center_rounded,
                   label: '${log.completedExerciseCount} exercises'),
-              const SizedBox(width: AppSpacing.md),
               _Chip(
                 icon: Icons.bar_chart_rounded,
                 label: UnitConverter.formatVolume(log.totalVolumeKg, units),

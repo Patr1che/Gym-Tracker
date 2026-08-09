@@ -60,7 +60,11 @@ class AppButton extends StatelessWidget {
       opacity: enabled || loading ? 1 : 0.5,
       child: Container(
         height: height,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+        // A full-width button centres its content, so wide side padding buys
+        // nothing but stolen room for the label — keep it only when the
+        // button hugs its content.
+        padding: EdgeInsets.symmetric(
+            horizontal: expand ? AppSpacing.md : AppSpacing.xl),
         decoration: BoxDecoration(
           color: background,
           gradient: variant == AppButtonVariant.primary ? gradient : null,

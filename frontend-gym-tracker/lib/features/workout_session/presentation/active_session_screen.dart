@@ -329,8 +329,11 @@ class _CurrentExerciseCard extends ConsumerWidget {
     final setNumber = exercise.isDone
         ? exercise.sets.length
         : exercise.nextSetIndex + 1;
+    final scheme = Theme.of(context).colorScheme;
+
     return GlassCard(
-      onTap: () => context.go(Routes.exerciseDetail(exercise.exerciseId)),
+      // push, not go: the session stays underneath, so back returns to it.
+      onTap: () => context.push(Routes.sessionExercise(exercise.exerciseId)),
       child: Row(
         children: [
           ExerciseAvatar(token: exercise.muscleToken, size: 64),
@@ -361,8 +364,26 @@ class _CurrentExerciseCard extends ConsumerWidget {
               ],
             ),
           ),
-          Icon(Icons.chevron_right_rounded,
-              color: Theme.of(context).colorScheme.onSurfaceVariant),
+          const SizedBox(width: AppSpacing.sm),
+          // Explicit affordance — the whole card opens it, but the workout
+          // screen gives no other hint that the guide exists.
+          Semantics(
+            button: true,
+            label: 'How to perform ${exercise.exerciseName}',
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.play_circle_outline_rounded,
+                    size: 26, color: scheme.primary),
+                const SizedBox(height: 2),
+                Text('How to',
+                    style: Theme.of(context)
+                        .textTheme
+                        .labelSmall
+                        ?.copyWith(color: scheme.primary)),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -586,31 +607,44 @@ class _CurrentSetEditorState extends ConsumerState<_CurrentSetEditor> {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          Row(
-            children: [
-              Expanded(
-                child: _StepperField(
-                  label:
-                      'Weight (${UnitConverter.weightUnit(widget.units)})',
-                  controller: _weight,
-                  onMinus: () => _bumpWeight(-2.5),
-                  onPlus: () => _bumpWeight(2.5),
-                  onChanged: (_) => _pushWeight(),
-                  hint: '0',
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: _StepperField(
-                  label: 'Reps',
-                  controller: _reps,
-                  onMinus: () => _bumpReps(-1),
-                  onPlus: () => _bumpReps(1),
-                  onChanged: (_) => _pushReps(),
-                  hint: '10',
-                ),
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final weight = _StepperField(
+                label: 'Weight (${UnitConverter.weightUnit(widget.units)})',
+                controller: _weight,
+                onMinus: () => _bumpWeight(-2.5),
+                onPlus: () => _bumpWeight(2.5),
+                onChanged: (_) => _pushWeight(),
+                hint: '0',
+              );
+              final reps = _StepperField(
+                label: 'Reps',
+                controller: _reps,
+                onMinus: () => _bumpReps(-1),
+                onPlus: () => _bumpReps(1),
+                onChanged: (_) => _pushReps(),
+                hint: '10',
+              );
+              // Each stepper spends 88px on its two round buttons, so side by
+              // side on a narrow phone leaves the input too cramped to show
+              // even two digits. Below that, one per row.
+              if (constraints.maxWidth < _StepperField.sideBySideMinWidth) {
+                return Column(
+                  children: [
+                    weight,
+                    const SizedBox(height: AppSpacing.md),
+                    reps,
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: weight),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(child: reps),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -627,6 +661,12 @@ class _StepperField extends StatelessWidget {
     required this.onChanged,
     required this.hint,
   });
+
+  /// Two steppers fit on one line only above this width. Measured: a 360dp
+  /// phone gives this row 269px, so each stepper gets 128 — 72px of round
+  /// buttons and ~48px of digits, which covers three digits and a decimal.
+  /// A 320dp phone gives 229px, too little, so there they stack instead.
+  static const double sideBySideMinWidth = 260;
 
   final String label;
   final TextEditingController controller;
@@ -658,8 +698,9 @@ class _StepperField extends StatelessWidget {
                   style: AppTypography.stat(context, size: 20),
                   decoration: InputDecoration(
                     hintText: hint,
+                    // Horizontal padding here is width the digits can't use.
                     contentPadding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.sm, vertical: AppSpacing.md),
+                        horizontal: AppSpacing.xs, vertical: AppSpacing.md),
                   ),
                 ),
               ),
@@ -688,14 +729,20 @@ class _RoundIconButton extends StatelessWidget {
         customBorder: const CircleBorder(),
         onTap: onTap,
         child: SizedBox(
-          width: 44,
-          height: 44,
-          child: Icon(icon, size: 20, color: scheme.onSurface),
+          // 36, not 44: the two buttons are pure width tax on the number
+          // beside them, and at 44 a phone this size clipped two digits.
+          width: 36,
+          height: 36,
+          child: Icon(icon, size: 18, color: scheme.onSurface),
         ),
       ),
     );
   }
 }
+
+/// Below this row width, Prev/Next go icon-only and the primary button drops
+/// its tick — measured against "Complete Set" at `labelLarge`.
+const double _tightControlsWidth = 300;
 
 class _Controls extends ConsumerWidget {
   const _Controls({required this.session, required this.onFinish});
@@ -719,40 +766,50 @@ class _Controls extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                children: [
-                  _EdgeButton(
-                    icon: Icons.skip_previous_rounded,
-                    label: 'Prev',
-                    enabled: !isFirst,
-                    onTap: controller.previousExercise,
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: exercise.isDone
-                        ? AppButton(
-                            label: session.allDone
-                                ? 'All sets done 🎉'
-                                : 'Next exercise',
-                            variant: AppButtonVariant.secondary,
-                            onPressed: session.allDone
-                                ? null
-                                : controller.nextExercise,
-                          )
-                        : AppButton(
-                            label: 'Complete Set',
-                            icon: Icons.check_rounded,
-                            onPressed: controller.completeSet,
-                          ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  _EdgeButton(
-                    icon: Icons.skip_next_rounded,
-                    label: 'Next',
-                    enabled: !isLast,
-                    onTap: controller.nextExercise,
-                  ),
-                ],
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  // Prev/Next flank the primary action, so every pixel they
+                  // take comes out of its label. On a narrow phone shrink
+                  // them and drop the tick, or "Complete Set" ellipsises.
+                  final tight = constraints.maxWidth < _tightControlsWidth;
+                  return Row(
+                    children: [
+                      _EdgeButton(
+                        icon: Icons.skip_previous_rounded,
+                        label: 'Prev',
+                        enabled: !isFirst,
+                        compact: tight,
+                        onTap: controller.previousExercise,
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: exercise.isDone
+                            ? AppButton(
+                                label: session.allDone
+                                    ? 'All sets done 🎉'
+                                    : 'Next exercise',
+                                variant: AppButtonVariant.secondary,
+                                onPressed: session.allDone
+                                    ? null
+                                    : controller.nextExercise,
+                              )
+                            : AppButton(
+                                label: 'Complete Set',
+                                icon: tight ? null : Icons.check_rounded,
+                                onPressed: controller.completeSet,
+                              ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      _EdgeButton(
+                        icon: Icons.skip_next_rounded,
+                        label: 'Next',
+                        enabled: !isLast,
+                        compact: tight,
+                        onTap: controller.nextExercise,
+                      ),
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: AppSpacing.sm),
               Row(
@@ -787,12 +844,17 @@ class _EdgeButton extends StatelessWidget {
     required this.label,
     required this.enabled,
     required this.onTap,
+    this.compact = false,
   });
 
   final IconData icon;
   final String label;
   final bool enabled;
   final VoidCallback onTap;
+
+  /// Icon only, at the minimum touch width — for phones too narrow to spare
+  /// the room. The skip glyphs carry the meaning; the word is a nicety.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -806,14 +868,15 @@ class _EdgeButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.md),
           onTap: enabled ? onTap : null,
           child: SizedBox(
-            width: 64,
+            width: compact ? 44 : 56,
             height: 52,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(icon, size: 20, color: scheme.onSurface),
-                Text(label,
-                    style: Theme.of(context).textTheme.labelSmall),
+                if (!compact)
+                  Text(label,
+                      style: Theme.of(context).textTheme.labelSmall),
               ],
             ),
           ),
@@ -901,108 +964,112 @@ class _SummarySheet extends ConsumerWidget {
     final units = ref.watch(unitsProvider);
     final log = summary.log;
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-            AppSpacing.xl, AppSpacing.sm, AppSpacing.xl, AppSpacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('Workout complete! 🎉',
+      // Scrollable: on a short screen the stats, PR list and button together
+      // are taller than the sheet can be.
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xl, AppSpacing.sm, AppSpacing.xl, AppSpacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('Workout complete! 🎉',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                '${log.dayName} · ${log.completedExerciseCount} exercises',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineMedium),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              '${log.dayName} · ${log.completedExerciseCount} exercises',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            Row(
-              children: [
-                Expanded(
-                  child: StatTile(
-                    label: 'Duration',
-                    value: formatDurationText(log.durationSec),
-                    icon: Icons.timer_outlined,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: StatTile(
-                    label: 'Volume',
-                    value: UnitConverter.formatVolume(log.totalVolumeKg, units),
-                    icon: Icons.fitness_center_rounded,
-                    accent: AppColors.secondary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Row(
-              children: [
-                Expanded(
-                  child: StatTile(
-                    label: 'Sets',
-                    value: '${log.totalSets}',
-                    icon: Icons.format_list_numbered_rounded,
-                    accent: AppColors.warning,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: StatTile(
-                    label: 'Est. calories',
-                    value: '${log.caloriesEst} kcal',
-                    icon: Icons.local_fire_department_rounded,
-                    accent: AppColors.danger,
-                  ),
-                ),
-              ],
-            ),
-            if (summary.newPrs.isNotEmpty) ...[
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
               const SizedBox(height: AppSpacing.xl),
-              GlassCard(
-                gradient: LinearGradient(colors: [
-                  AppColors.primary.withValues(alpha: 0.16),
-                  AppColors.secondary.withValues(alpha: 0.12),
-                ]),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('🏆 New personal records',
-                        style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: AppSpacing.md),
-                    for (final pr in summary.newPrs)
-                      Padding(
-                        padding:
-                            const EdgeInsets.only(bottom: AppSpacing.sm),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.emoji_events_rounded,
-                                size: 18, color: AppColors.warning),
-                            const SizedBox(width: AppSpacing.md),
-                            Expanded(
-                              child: Text(
-                                '${AppConstants.keyLifts[pr.exerciseId] ?? pr.exerciseId}'
-                                ' — ${pr.type.label}: ${_prValue(pr, units)}',
-                                style:
-                                    Theme.of(context).textTheme.bodyMedium,
+              Row(
+                children: [
+                  Expanded(
+                    child: StatTile(
+                      label: 'Duration',
+                      value: formatDurationText(log.durationSec),
+                      icon: Icons.timer_outlined,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: StatTile(
+                      label: 'Volume',
+                      value: UnitConverter.formatVolume(log.totalVolumeKg, units),
+                      icon: Icons.fitness_center_rounded,
+                      accent: AppColors.secondary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Row(
+                children: [
+                  Expanded(
+                    child: StatTile(
+                      label: 'Sets',
+                      value: '${log.totalSets}',
+                      icon: Icons.format_list_numbered_rounded,
+                      accent: AppColors.warning,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: StatTile(
+                      label: 'Est. calories',
+                      value: '${log.caloriesEst} kcal',
+                      icon: Icons.local_fire_department_rounded,
+                      accent: AppColors.danger,
+                    ),
+                  ),
+                ],
+              ),
+              if (summary.newPrs.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.xl),
+                GlassCard(
+                  gradient: LinearGradient(colors: [
+                    AppColors.primary.withValues(alpha: 0.16),
+                    AppColors.secondary.withValues(alpha: 0.12),
+                  ]),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('🏆 New personal records',
+                          style: Theme.of(context).textTheme.titleMedium),
+                      const SizedBox(height: AppSpacing.md),
+                      for (final pr in summary.newPrs)
+                        Padding(
+                          padding:
+                              const EdgeInsets.only(bottom: AppSpacing.sm),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.emoji_events_rounded,
+                                  size: 18, color: AppColors.warning),
+                              const SizedBox(width: AppSpacing.md),
+                              Expanded(
+                                child: Text(
+                                  '${AppConstants.keyLifts[pr.exerciseId] ?? pr.exerciseId}'
+                                  ' — ${pr.type.label}: ${_prValue(pr, units)}',
+                                  style:
+                                      Theme.of(context).textTheme.bodyMedium,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
+              ],
+              const SizedBox(height: AppSpacing.xl),
+              AppButton(
+                label: 'Done',
+                onPressed: () => Navigator.of(context).pop(),
               ),
             ],
-            const SizedBox(height: AppSpacing.xl),
-            AppButton(
-              label: 'Done',
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
+          ),
         ),
       ),
     );

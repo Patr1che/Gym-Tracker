@@ -101,6 +101,25 @@ void main() {
     expect(tapped, isTrue);
   });
 
+  testWidgets('SelectableChip keeps its size when selected', (tester) async {
+    // Selecting must not resize the pill: in a Wrap, a chip that grows or
+    // shrinks on tap shifts every chip after it.
+    await pumpApp(
+      tester,
+      Scaffold(
+        body: Column(
+          children: [
+            SelectableChip(label: 'Beginner', selected: false, onTap: () {}),
+            SelectableChip(label: 'Beginner', selected: true, onTap: () {}),
+          ],
+        ),
+      ),
+    );
+
+    final chips = find.byType(SelectableChip);
+    expect(tester.getSize(chips.at(0)), tester.getSize(chips.at(1)));
+  });
+
   testWidgets('DifficultyBadge shows the level label', (tester) async {
     await pumpApp(
       tester,

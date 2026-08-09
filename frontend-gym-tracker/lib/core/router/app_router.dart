@@ -72,6 +72,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.session,
         parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => const ActiveSessionScreen(),
+        routes: [
+          // Pushed on the root navigator so it stacks on top of the live
+          // session — popping lands back on the workout, not the library.
+          GoRoute(
+            path: 'exercise/:id',
+            parentNavigatorKey: rootNavigatorKey,
+            builder: (context, state) => ExerciseDetailScreen(
+              exerciseId: state.pathParameters['id']!,
+              standalone: true,
+            ),
+          ),
+        ],
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
@@ -174,10 +186,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                     GoRoute(
                       path: 'about',
                       builder: (context, state) => const AboutScreen(),
-                    ),
-                    GoRoute(
-                      path: 'feedback',
-                      builder: (context, state) => const FeedbackScreen(),
                     ),
                   ],
                 ),

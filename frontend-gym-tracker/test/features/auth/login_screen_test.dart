@@ -25,12 +25,22 @@ void main() {
         settingsBoxProvider.overrideWithValue(FakeJsonBox()),
       ];
 
+
+  /// The brand logo makes the form taller than the test viewport, so the
+  /// button must be scrolled into view before it can be tapped.
+  Future<void> submit(WidgetTester tester) async {
+    final button = find.text('Sign In');
+    await tester.ensureVisible(button);
+    await tester.pumpAndSettle();
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('shows validation errors when submitting an empty form',
       (tester) async {
     await pumpApp(tester, const LoginScreen(), overrides: overrides());
 
-    await tester.tap(find.text('Sign In'));
-    await tester.pumpAndSettle();
+    await submit(tester);
 
     expect(find.text('Email is required'), findsOneWidget);
     expect(find.text('Password is required'), findsOneWidget);
@@ -40,8 +50,7 @@ void main() {
     await pumpApp(tester, const LoginScreen(), overrides: overrides());
 
     await tester.enterText(find.byType(TextFormField).first, 'not-an-email');
-    await tester.tap(find.text('Sign In'));
-    await tester.pumpAndSettle();
+    await submit(tester);
 
     expect(find.text('Enter a valid email address'), findsOneWidget);
   });
@@ -52,8 +61,8 @@ void main() {
     final fields = find.byType(TextFormField);
     await tester.enterText(fields.at(0), 'alex@example.com');
     await tester.enterText(fields.at(1), 'wrongpassword1');
-    await tester.tap(find.text('Sign In'));
-    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Sign In'));
+    await submit(tester);
 
     expect(find.text('Invalid email or password'), findsOneWidget);
     expect(sessionStore.currentUserId, isNull);
@@ -66,8 +75,8 @@ void main() {
     final fields = find.byType(TextFormField);
     await tester.enterText(fields.at(0), 'Alex@Example.com');
     await tester.enterText(fields.at(1), 'secret123');
-    await tester.tap(find.text('Sign In'));
-    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Sign In'));
+    await submit(tester);
 
     expect(sessionStore.currentUserId, 'u1');
     expect(sessionStore.rememberMe, isTrue);
@@ -82,8 +91,7 @@ void main() {
     final fields = find.byType(TextFormField);
     await tester.enterText(fields.at(0), 'alex@example.com');
     await tester.enterText(fields.at(1), 'secret123');
-    await tester.tap(find.text('Sign In'));
-    await tester.pumpAndSettle();
+    await submit(tester);
 
     expect(sessionStore.rememberMe, isFalse);
   });

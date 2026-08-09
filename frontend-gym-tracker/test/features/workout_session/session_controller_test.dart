@@ -97,6 +97,54 @@ void main() {
     expect(session.restEndsAt, now.add(const Duration(seconds: 60)));
   });
 
+  test('a completed set seeds the sets still to come', () {
+    final container = makeContainer();
+    startWorkout(container);
+    final controller = container.read(sessionControllerProvider.notifier);
+
+    controller.updateCurrentSet(weightKg: 60, reps: 12);
+    controller.completeSet();
+
+    final upcoming =
+        container.read(sessionControllerProvider)!.exercises.first.sets[1];
+    expect(upcoming.weightKg, 60);
+    expect(upcoming.reps, 12);
+    expect(upcoming.completed, isFalse, reason: 'seeded, not performed');
+  });
+
+  test('the seed follows the latest set, and edits still win', () {
+    final container = makeContainer();
+    startWorkout(container);
+    final controller = container.read(sessionControllerProvider.notifier);
+
+    controller.updateCurrentSet(weightKg: 60, reps: 12);
+    controller.completeSet();
+    // Second set: drop the weight, which must not be overwritten.
+    controller.updateCurrentSet(weightKg: 50, reps: 10);
+
+    final sets =
+        container.read(sessionControllerProvider)!.exercises.first.sets;
+    expect(sets[1].weightKg, 50);
+    expect(sets[1].reps, 10);
+    // The finished set keeps what was actually lifted.
+    expect(sets[0].weightKg, 60);
+    expect(sets[0].reps, 12);
+  });
+
+  test('seeded-but-unperformed sets stay out of the saved log', () async {
+    final container = makeContainer();
+    startWorkout(container);
+    final controller = container.read(sessionControllerProvider.notifier);
+
+    controller.updateCurrentSet(weightKg: 60, reps: 12);
+    controller.completeSet();
+    final summary = await controller.finish();
+
+    // One completed set only — the seeded second set must not add volume.
+    expect(summary!.log.totalSets, 1);
+    expect(summary.log.totalVolumeKg, 60 * 12);
+  });
+
   test('restRemainingSeconds derives from the clock, not tick counting', () {
     final container = makeContainer();
     startWorkout(container);

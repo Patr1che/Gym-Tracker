@@ -40,23 +40,37 @@ class SelectableChip extends StatelessWidget {
             gradient: selected ? AppColors.primaryGradient : null,
             color: selected ? null : scheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(AppRadius.pill),
-            border: selected ? null : Border.all(color: scheme.outline),
+            // Transparent rather than absent: a Container insets its child by
+            // the border width, so dropping the border on selection would
+            // shrink the pill by 2px and shuffle the row.
+            border: Border.all(
+                color: selected ? Colors.transparent : scheme.outline),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: 18, color: foreground),
-                const SizedBox(width: AppSpacing.sm),
-              ],
-              Text(
+          // A chip in a Wrap must shrink to the row it sits in, but the same
+          // chip in a horizontal ListView gets unbounded width, where a flex
+          // child would assert — so only claim flex when there is a width.
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final text = Text(
                 label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: Theme.of(context)
                     .textTheme
                     .labelMedium
                     ?.copyWith(color: foreground, fontWeight: FontWeight.w700),
-              ),
-            ],
+              );
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (icon != null) ...[
+                    Icon(icon, size: 18, color: foreground),
+                    const SizedBox(width: AppSpacing.sm),
+                  ],
+                  if (constraints.hasBoundedWidth) Flexible(child: text) else text,
+                ],
+              );
+            },
           ),
         ),
       ),

@@ -294,6 +294,7 @@ class _StatsStep extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             Wrap(
               spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
               children: [
                 for (final g in Gender.values)
                   SelectableChip(

@@ -58,6 +58,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -72,6 +73,7 @@ flutter:
 
   assets:
     - assets/exercise_videos.json
+    - assets/logo.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -103,3 +105,18 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# App launcher icon. Regenerate after changing the source:
+#   dart run flutter_launcher_icons
+flutter_launcher_icons:
+  android: "launcher_icon"
+  image_path: "assets/logo_icon.png"
+  # The logo has a solid dark background, so the adaptive-icon background is
+  # matched to it rather than left white.
+  adaptive_icon_background: "#0E1B2E"
+  adaptive_icon_foreground: "assets/logo_icon.png"
+  web:
+    generate: true
+    image_path: "assets/logo_icon.png"
+    background_color: "#0A0E17"
+    theme_color: "#A3E635"

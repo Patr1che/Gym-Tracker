@@ -7,20 +7,33 @@ import '../../../../core/widgets/difficulty_badge.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/exercise_avatar.dart';
 import '../../../../core/widgets/glass_card.dart';
+import '../../../../core/widgets/gradient_background.dart';
 import '../../../shell/presentation/app_shell.dart';
 import '../exercise_providers.dart';
 import '../widgets/exercise_video.dart';
 
 class ExerciseDetailScreen extends ConsumerWidget {
-  const ExerciseDetailScreen({super.key, required this.exerciseId});
+  const ExerciseDetailScreen({
+    super.key,
+    required this.exerciseId,
+    this.standalone = false,
+  });
 
   final String exerciseId;
+
+  /// True when pushed on the root navigator (over a running workout) rather
+  /// than inside the tab shell: the screen then paints its own backdrop and
+  /// drops the padding reserved for the bottom nav bar.
+  final bool standalone;
+
+  Widget _backdrop(Widget scaffold) =>
+      standalone ? GradientBackground(child: scaffold) : scaffold;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final exercise = ref.watch(exerciseByIdProvider(exerciseId));
     if (exercise == null) {
-      return Scaffold(
+      return _backdrop(Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(),
         body: const EmptyState(
@@ -28,12 +41,12 @@ class ExerciseDetailScreen extends ConsumerWidget {
           title: 'Exercise not found',
           message: 'This exercise may have been removed.',
         ),
-      );
+      ));
     }
     final favorite =
         ref.watch(favoritesControllerProvider).contains(exercise.id);
 
-    return Scaffold(
+    return _backdrop(Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(exercise.name),
@@ -55,8 +68,8 @@ class ExerciseDetailScreen extends ConsumerWidget {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.screenH, 0,
-            AppSpacing.screenH, kBottomNavClearance),
+        padding: EdgeInsets.fromLTRB(AppSpacing.screenH, 0, AppSpacing.screenH,
+            standalone ? AppSpacing.xxxl : kBottomNavClearance),
         children: [
           ExerciseVideo(exercise: exercise),
           const SizedBox(height: AppSpacing.lg),
@@ -144,7 +157,7 @@ class ExerciseDetailScreen extends ConsumerWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }
 

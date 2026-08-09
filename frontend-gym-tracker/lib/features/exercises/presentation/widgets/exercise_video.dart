@@ -98,6 +98,14 @@ Future<void> _openOnYouTube(BuildContext context, String videoId) async {
 /// works in an Android WebView here — 5.2.2 hard-coded an origin and was
 /// rejected with error 152-4. It also needs Dart 3.10+, which is why the
 /// Flutter SDK had to be upgraded before this could be used.
+///
+/// On mobile the package paints the WebView into the app's Overlay at the
+/// player's *global* rect, not into this widget's subtree — so it does not
+/// travel with the page during a route transition: it hangs in mid-screen
+/// while the rest of the page slides away, then blinks out. The player is
+/// therefore mounted only while the route sits still, with the video's
+/// thumbnail standing in underneath. That thumbnail is an ordinary widget,
+/// so it animates with the page and the transition stays smooth.
 class _EmbeddedPlayer extends StatefulWidget {
   const _EmbeddedPlayer({super.key, required this.videoId});
 
@@ -109,6 +117,8 @@ class _EmbeddedPlayer extends StatefulWidget {
 
 class _EmbeddedPlayerState extends State<_EmbeddedPlayer> {
   late final YoutubePlayerController _controller;
+  Animation<double>? _routeAnimation;
+  bool _routeSettled = true;
 
   @override
   void initState() {
@@ -126,7 +136,30 @@ class _EmbeddedPlayerState extends State<_EmbeddedPlayer> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final animation = ModalRoute.of(context)?.animation;
+    if (identical(animation, _routeAnimation)) return;
+    _routeAnimation?.removeStatusListener(_onRouteStatus);
+    _routeAnimation = animation;
+    animation?.addStatusListener(_onRouteStatus);
+    // No route (tests, embedded use) counts as settled.
+    _routeSettled =
+        animation == null || animation.status == AnimationStatus.completed;
+  }
+
+  void _onRouteStatus(AnimationStatus status) {
+    final settled = status == AnimationStatus.completed;
+    if (settled == _routeSettled) return;
+    // The WebView outlives this frame by a few hundred ms; pause first or the
+    // video keeps playing, unseen, over the transition.
+    if (!settled) _controller.pauseVideo();
+    setState(() => _routeSettled = settled);
+  }
+
+  @override
   void dispose() {
+    _routeAnimation?.removeStatusListener(_onRouteStatus);
     _controller.close();
     super.dispose();
   }
@@ -137,8 +170,43 @@ class _EmbeddedPlayerState extends State<_EmbeddedPlayer> {
       borderRadius: BorderRadius.circular(AppRadius.xl),
       child: AspectRatio(
         aspectRatio: 16 / 9,
-        child: YoutubePlayer(controller: _controller),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            _VideoThumbnail(videoId: widget.videoId),
+            if (_routeSettled)
+              YoutubePlayer(
+                controller: _controller,
+                // Transparent, so the thumbnail below shows through while the
+                // iframe loads instead of an opaque grey fill.
+                backgroundColor: Colors.transparent,
+              ),
+          ],
+        ),
       ),
+    );
+  }
+}
+
+/// Still frame shown behind the player: during route transitions it is all
+/// there is to see, and while the iframe loads it stands in for the poster.
+class _VideoThumbnail extends StatelessWidget {
+  const _VideoThumbnail({required this.videoId});
+
+  final String videoId;
+
+  @override
+  Widget build(BuildContext context) {
+    final fallback =
+        ColoredBox(color: Theme.of(context).colorScheme.surfaceContainerHighest);
+    return Image.network(
+      YoutubePlayerController.getThumbnail(
+          videoId: videoId, quality: ThumbnailQuality.high),
+      fit: BoxFit.cover,
+      // hqdefault is 4:3 with letterbox bars; cover crops them back off.
+      loadingBuilder: (_, child, progress) =>
+          progress == null ? child : fallback,
+      errorBuilder: (_, __, ___) => fallback,
     );
   }
 }
@@ -306,12 +374,16 @@ class _PillButton extends StatelessWidget {
             children: [
               Icon(icon, size: 20, color: Colors.white),
               const SizedBox(width: AppSpacing.sm),
-              Text(
-                label,
-                style: Theme.of(context)
-                    .textTheme
-                    .labelLarge
-                    ?.copyWith(color: Colors.white),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context)
+                      .textTheme
+                      .labelLarge
+                      ?.copyWith(color: Colors.white),
+                ),
               ),
             ],
           ),

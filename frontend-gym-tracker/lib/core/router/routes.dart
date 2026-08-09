@@ -28,5 +28,9 @@ abstract final class Routes {
 
   static const session = '/session';
 
+  /// Exercise detail pushed *over* a running workout, so back returns to the
+  /// session instead of the exercise library.
+  static String sessionExercise(String id) => '/session/exercise/$id';
+
   static const authPaths = {login, register, forgotPassword};
 }

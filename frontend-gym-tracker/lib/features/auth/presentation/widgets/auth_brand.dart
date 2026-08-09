@@ -14,25 +14,27 @@ class AuthBrand extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          width: 72,
-          height: 72,
-          decoration: BoxDecoration(
-            gradient: AppColors.primaryGradient,
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.4),
-                blurRadius: 28,
-                offset: const Offset(0, 8),
+        // The logo already carries the wordmark, so no separate app-name text.
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          child: Image.asset(
+            'assets/logo.png',
+            width: 148,
+            height: 148,
+            fit: BoxFit.cover,
+            // Falls back to the mark if the asset is ever missing.
+            errorBuilder: (context, error, stack) => Container(
+              width: 148,
+              height: 148,
+              decoration: BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
-            ],
+              child: const Icon(Icons.fitness_center_rounded,
+                  size: 56, color: AppColors.bgDark),
+            ),
           ),
-          child: const Icon(Icons.fitness_center_rounded,
-              size: 36, color: AppColors.bgDark),
         ),
-        const SizedBox(height: AppSpacing.xl),
-        Text('GymTracker', style: Theme.of(context).textTheme.headlineMedium),
         const SizedBox(height: AppSpacing.xxl),
         Align(
           alignment: Alignment.centerLeft,

@@ -137,7 +137,15 @@ class SessionController extends Notifier<ActiveSessionState?> {
     final setIndex = exercise.nextSetIndex;
     if (setIndex == -1) return;
     final sets = [...exercise.sets];
-    sets[setIndex] = sets[setIndex].copyWith(completed: true);
+    final done = sets[setIndex].copyWith(completed: true);
+    sets[setIndex] = done;
+    // Carry the load forward: the sets still to come start from what was
+    // just lifted rather than an empty field. They stay editable, and
+    // completing an edited set carries the new numbers on from there.
+    for (var i = setIndex + 1; i < sets.length; i++) {
+      if (sets[i].completed || sets[i].skipped) continue;
+      sets[i] = sets[i].copyWith(weightKg: done.weightKg, reps: done.reps);
+    }
     final updated = exercise.copyWith(sets: sets);
 
     var next = _withExercise(session, updated);
