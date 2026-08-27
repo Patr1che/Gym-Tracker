@@ -1,0 +1,39 @@
+# Render Blueprint. With this committed, Render's "New > Blueprint" reads the whole
+# service definition from the repo instead of you filling in a form.
+#
+# The database is deliberately NOT defined here: Postgres lives on Neon, because
+# Render's own free Postgres expires after 30 days and would take the data with it.
+services:
+  - type: web
+    name: gymtracker-api
+    runtime: docker
+    plan: free
+    # Closest free region to the Philippines; Oregon and Frankfurt are the alternatives.
+    region: singapore
+    rootDir: backend-gym-tracker
+    dockerfilePath: ./Dockerfile
+
+    # Render restarts the instance if this stops returning 200, and uses it to decide
+    # when a new deploy is live.
+    healthCheckPath: /actuator/health
+
+    envVars:
+      # From the Neon dashboard. DATABASE_URL must be the JDBC form:
+      #   jdbc:postgresql://ep-xxx.region.aws.neon.tech/gymtracker?sslmode=require
+      # sslmode=require is mandatory - Neon refuses unencrypted connections.
+      - key: DATABASE_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+
+      # Render generates a 32-byte value and keeps it out of the repo. The app refuses
+      # to start on anything shorter.
+      - key: JWT_SECRET
+        generateValue: true
+
+      # Exact origins only - "*" is rejected once the API sends an Authorization header.
+      # Set this to wherever the Flutter web build is served from.
+      - key: CORS_ORIGINS
+        sync: false

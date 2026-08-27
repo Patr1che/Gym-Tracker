@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: gymtracker-api
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5433/gymtracker}
+    username: ${DB_USER:gym}
+    password: ${DB_PASSWORD:gym}
+    hikari:
+      maximum-pool-size: 5      # Neon's free tier caps connections
+      minimum-idle: 1
+  jpa:
+    hibernate:
+      ddl-auto: validate        # Flyway owns the schema - never 'update'
+    open-in-view: false
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  flyway:
+    enabled: true
+  jackson:
+    default-property-inclusion: non_null
+
+server:
+  port: ${PORT:8097}
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info    # never env or heapdump
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:change-me-locally-only-min-32-bytes-long-abcdef}
+    access-ttl-minutes: 15
+    refresh-ttl-days: 30
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:5555}
+
+logging:
+  level:
+    org.flywaydb: INFO

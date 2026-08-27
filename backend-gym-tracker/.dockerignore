@@ -1,0 +1,7 @@
+target/
+.git/
+.gitignore
+.mvn/wrapper/maven-wrapper.jar
+*.md
+docker-compose.yml
+.env
