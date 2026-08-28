@@ -38,13 +38,23 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
-    final error = await ref.read(authControllerProvider.notifier).register(
-          name: _name.text,
-          email: _email.text,
-          password: _password.text,
-        );
+
+    String? error;
+    try {
+      error = await ref.read(authControllerProvider.notifier).register(
+            name: _name.text,
+            email: _email.text,
+            password: _password.text,
+          );
+    } catch (e) {
+      // See LoginScreen._submit - the finally clause is what guarantees the
+      // button never stays stuck spinning.
+      error = 'Something went wrong. Please try again.';
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+
     if (!mounted) return;
-    setState(() => _loading = false);
     if (error != null) {
       showErrorSnack(context, error);
     }

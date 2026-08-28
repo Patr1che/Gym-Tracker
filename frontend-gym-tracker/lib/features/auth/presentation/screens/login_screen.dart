@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -25,23 +27,58 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _rememberMe = true;
   bool _loading = false;
 
+  /// Shown once a request has been waiting long enough to look broken.
+  ///
+  /// The free hosting tier spins the API down after ~15 minutes idle, and a
+  /// cold start can take most of a minute. Without this the button just spins
+  /// and the app looks hung.
+  bool _slow = false;
+  Timer? _slowTimer;
+
   @override
   void dispose() {
+    _slowTimer?.cancel();
     _email.dispose();
     _password.dispose();
     super.dispose();
   }
 
+  void _startSlowHint() {
+    _slowTimer?.cancel();
+    _slow = false;
+    _slowTimer = Timer(const Duration(seconds: 6), () {
+      if (mounted && _loading) setState(() => _slow = true);
+    });
+  }
+
+  void _stopSlowHint() {
+    _slowTimer?.cancel();
+    _slow = false;
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
-    final error = await ref.read(authControllerProvider.notifier).login(
-          email: _email.text,
-          password: _password.text,
-          rememberMe: _rememberMe,
-        );
+    _startSlowHint();
+
+    String? error;
+    try {
+      error = await ref.read(authControllerProvider.notifier).login(
+            email: _email.text,
+            password: _password.text,
+            rememberMe: _rememberMe,
+          );
+    } catch (e) {
+      // Belt and braces. The controller already turns failures into messages,
+      // but anything unforeseen escaping here would strand the button in its
+      // loading state with no way out, so the finally below always clears it.
+      error = 'Something went wrong. Please try again.';
+    } finally {
+      _stopSlowHint();
+      if (mounted) setState(() => _loading = false);
+    }
+
     if (!mounted) return;
-    setState(() => _loading = false);
     if (error != null) {
       showErrorSnack(context, error);
     }
@@ -131,6 +168,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 loading: _loading,
                 onPressed: _submit,
               ),
+              if (_slow) ...[
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  'Waking the server — this can take up to a minute the first '
+                  'time.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
               const SizedBox(height: AppSpacing.xl),
               Wrap(
                 alignment: WrapAlignment.center,

@@ -60,15 +60,21 @@ class AuthController extends Notifier<AuthState> {
     required String password,
     required bool rememberMe,
   }) async {
-    final user = await ref
-        .read(authRepositoryProvider)
-        .login(email: email, password: password);
-    if (user == null) return 'Invalid email or password';
-    await ref
-        .read(sessionStoreProvider)
-        .save(userId: user.id, rememberMe: rememberMe);
-    state = AuthState(user: user);
-    return null;
+    try {
+      final user = await ref
+          .read(authRepositoryProvider)
+          .login(email: email, password: password);
+      // null means the server rejected the credentials; an exception means the
+      // request never got an answer. Those are different messages.
+      if (user == null) return 'Invalid email or password';
+      await ref
+          .read(sessionStoreProvider)
+          .save(userId: user.id, rememberMe: rememberMe);
+      state = AuthState(user: user);
+      return null;
+    } on AuthException catch (e) {
+      return e.message;
+    }
   }
 
   /// Returns an error message, or null on success. Signs the new user in.

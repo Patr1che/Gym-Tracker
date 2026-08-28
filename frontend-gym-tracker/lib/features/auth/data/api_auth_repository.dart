@@ -40,12 +40,18 @@ class ApiAuthRepository implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    final data = await _post('/auth/register', {
-      'name': name.trim(),
-      'email': email.trim().toLowerCase(),
-      'password': password,
-    });
-    return _acceptSession(data);
+    try {
+      final data = await _post('/auth/register', {
+        'name': name.trim(),
+        'email': email.trim().toLowerCase(),
+        'password': password,
+      });
+      return _acceptSession(data);
+    } on ApiException catch (e) {
+      // The interface promises AuthException, and callers catch only that.
+      // Letting an ApiException escape leaves the caller's spinner running.
+      throw AuthException(e.message);
+    }
   }
 
   @override
@@ -89,8 +95,8 @@ class ApiAuthRepository implements AuthRepository {
       final data = await _api.patch('/me', body: body);
       if (data is Map<String, dynamic>) await _cache(data, user.id);
     } on ApiException catch (e) {
-      if (!e.isNetworkFailure) rethrow;
       // Offline: the local copy stands and the next sync reconciles it.
+      if (!e.isNetworkFailure) throw AuthException(e.message);
     }
   }
 
