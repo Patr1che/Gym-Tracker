@@ -185,7 +185,8 @@ class _ProgramEditorScreenState extends ConsumerState<ProgramEditorScreen> {
     final days = [..._draft.days];
     final day = days[_dayIndex];
     final exercises = [...day.exercises];
-    exercises.insert(newIndex, exercises.removeAt(oldIndex));
+    final target = newIndex > oldIndex ? newIndex - 1 : newIndex;
+    exercises.insert(target, exercises.removeAt(oldIndex));
     days[_dayIndex] =
         ProgramDay(id: day.id, name: day.name, exercises: exercises);
     _update(_withDays(days));
@@ -350,7 +351,7 @@ class _ProgramEditorScreenState extends ConsumerState<ProgramEditorScreen> {
                 physics: const NeverScrollableScrollPhysics(),
                 buildDefaultDragHandles: false,
                 itemCount: day.exercises.length,
-                onReorderItem: _reorderExercise,
+                onReorder: _reorderExercise,
                 itemBuilder: (context, i) => Padding(
                   key: ValueKey('${day.id}_$i'),
                   padding: const EdgeInsets.only(bottom: AppSpacing.md),
