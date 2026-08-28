@@ -49,20 +49,20 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('flags a weak password', (tester) async {
+  testWidgets('accepts a short, letters-only password', (tester) async {
     await pumpApp(tester, const RegisterScreen(), overrides: overrides());
     await fillForm(tester, password: 'abc', confirm: 'abc');
     await submit(tester);
 
-    expect(find.text('At least 8 characters'), findsOneWidget);
+    expect(authRepo.findByEmail('new@example.com'), isNotNull);
   });
 
-  testWidgets('flags a password with no digit', (tester) async {
+  testWidgets('flags an empty password', (tester) async {
     await pumpApp(tester, const RegisterScreen(), overrides: overrides());
-    await fillForm(tester, password: 'onlyletters', confirm: 'onlyletters');
+    await fillForm(tester, password: '', confirm: '');
     await submit(tester);
 
-    expect(find.text('Include a number'), findsOneWidget);
+    expect(find.text('Password is required'), findsOneWidget);
   });
 
   testWidgets('flags mismatched confirmation', (tester) async {

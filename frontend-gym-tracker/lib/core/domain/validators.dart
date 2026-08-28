@@ -23,11 +23,10 @@ abstract final class Validators {
     return null;
   }
 
+  /// Only requires a non-empty value. Composition rules (length, letters,
+  /// digits) are deliberately absent: the password is whatever the user wants.
   static String? password(String? value) {
     if (value == null || value.isEmpty) return 'Password is required';
-    if (value.length < 8) return 'At least 8 characters';
-    if (!value.contains(RegExp(r'[A-Za-z]'))) return 'Include a letter';
-    if (!value.contains(RegExp(r'[0-9]'))) return 'Include a number';
     return null;
   }
 

@@ -19,17 +19,19 @@ void main() {
   });
 
   group('Validators.password', () {
-    test('accepts letters + digits, 8+ chars', () {
+    test('accepts anything the user types', () {
       expect(Validators.password('abcd1234'), isNull);
       expect(Validators.password('Str0ngPass!'), isNull);
+      expect(Validators.password('a'), isNull); // short is allowed
+      expect(Validators.password('onlyletters'), isNull); // no digit needed
+      expect(Validators.password('12345678'), isNull); // no letter needed
+      expect(Validators.password(' '), isNull); // even whitespace
+      expect(Validators.password('p' * 500), isNull); // no upper bound
     });
 
-    test('rejects weak passwords', () {
+    test('rejects only an absent password', () {
       expect(Validators.password(null), isNotNull);
       expect(Validators.password(''), isNotNull);
-      expect(Validators.password('short1'), isNotNull); // too short
-      expect(Validators.password('onlyletters'), isNotNull); // no digit
-      expect(Validators.password('12345678'), isNotNull); // no letter
     });
   });
 

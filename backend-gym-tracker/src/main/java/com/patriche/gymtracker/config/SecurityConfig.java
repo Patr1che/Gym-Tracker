@@ -1,6 +1,7 @@
 package com.patriche.gymtracker.config;
 
 import com.patriche.gymtracker.auth.JwtAuthFilter;
+import com.patriche.gymtracker.auth.UnboundedBCryptPasswordEncoder;
 import java.util.List;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -9,7 +10,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -43,9 +43,10 @@ class SecurityConfig {
                 .build();
     }
 
+    /** BCrypt, but without its 72-byte ceiling - users pick whatever password they want. */
     @Bean
     PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new UnboundedBCryptPasswordEncoder();
     }
 
     /** Exact origins, never "*", because the API sends an Authorization header. */

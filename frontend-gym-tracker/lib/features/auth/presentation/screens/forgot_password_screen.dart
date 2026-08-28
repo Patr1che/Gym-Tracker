@@ -109,7 +109,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             AppTextField(
               label: 'New Password',
               controller: _password,
-              hint: 'At least 8 characters, letters & numbers',
+              hint: 'Any password you like',
               prefixIcon: Icons.lock_outline_rounded,
               obscure: true,
               textInputAction: TextInputAction.next,

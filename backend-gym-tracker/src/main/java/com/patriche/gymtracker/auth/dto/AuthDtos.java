@@ -13,7 +13,8 @@ public final class AuthDtos {
     public record RegisterRequest(
             @NotBlank @Size(max = 80) String name,
             @NotBlank @Email @Size(max = 254) String email,
-            @NotBlank @Size(min = 8, max = 128) String password) {}
+            // No length or composition rules: the password is whatever the user chooses.
+            @NotBlank String password) {}
 
     public record LoginRequest(
             @NotBlank @Email String email,

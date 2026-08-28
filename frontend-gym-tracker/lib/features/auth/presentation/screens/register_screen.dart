@@ -99,7 +99,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             AppTextField(
               label: 'Password',
               controller: _password,
-              hint: 'At least 8 characters, letters & numbers',
+              hint: 'Any password you like',
               prefixIcon: Icons.lock_outline_rounded,
               obscure: true,
               textInputAction: TextInputAction.next,
