@@ -1,11 +1,23 @@
 # Render's free tier spins a service down after ~15 minutes idle, and a JVM waking on
-# 0.1 CPU is slow. The free allowance is 750 instance-hours against roughly 720 hours in
-# a month, so a ping every 10 minutes keeps the service warm and still fits the budget.
+# 0.1 CPU is slow. This job pings it awake - but only during the hours it is worth
+# paying for.
+#
+# Round-the-clock pinging spent ~720 of the 750 free instance-hours a month, leaving no
+# room for deploys and no room for a second free service ever. It also bought less than
+# it looks like: the app is offline-first, so a sleeping API is invisible almost
+# everywhere. Session restore reads Hive synchronously and sync runs fire-and-forget in
+# the background, both of which are happy to wait out a cold start. The only place a
+# user actually watches the server wake up is signing in or registering.
+#
+# So the window covers waking hours in the Philippines (UTC+8), where sign-ups happen:
+# 06:00-23:00 PHT is 22:00-15:00 UTC. That is ~17 hours a day, ~520 instance-hours a
+# month, leaving real headroom. Outside it the service sleeps and a 3am sign-in pays a
+# cold start - shortened by the JVM flags in the Dockerfile.
 name: Keep API awake
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/10 22-23,0-14 * * *"
   workflow_dispatch:
 
 jobs:
@@ -21,4 +33,9 @@ jobs:
             echo "API_URL secret not set - skipping."
             exit 0
           fi
-          curl -fsS --max-time 90 --retry 3 --retry-delay 20 "$API_URL/actuator/health"
+          # Liveness, not /actuator/health: the plain endpoint runs a database check, so
+          # this ping would have reached Postgres every 10 minutes and stopped Neon's
+          # compute from ever suspending - spending the month's 100 CU-hours on nothing
+          # but keepalives. Liveness answers from memory, so it wakes Render's instance
+          # (the point of this job) without waking the database.
+          curl -fsS --max-time 90 --retry 3 --retry-delay 20 "$API_URL/actuator/health/liveness"

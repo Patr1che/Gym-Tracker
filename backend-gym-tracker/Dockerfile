@@ -25,6 +25,22 @@ USER app
 ENV PORT=8080
 EXPOSE 8080
 
-# MaxRAMPercentage keeps the heap inside a 512 MB free-tier container; the JVM
-# otherwise sizes itself against the host and gets OOM-killed.
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "app.jar"]
+# Tuned for the shape of a free Render instance: 512 MB of RAM, a fraction of a CPU,
+# and frequent cold starts. Startup time matters far more here than peak throughput,
+# because the API spends its life waiting on Postgres rather than burning CPU.
+#
+#   MaxRAMPercentage   keeps the heap inside the container; the JVM otherwise sizes
+#                      itself against the host and gets OOM-killed.
+#   UseSerialGC        G1's concurrent collector threads cost more than they return on
+#                      a fraction of a CPU with a small heap. Serial starts quicker and
+#                      leaves more of that fraction for the application.
+#   TieredStopAtLevel=1 compile with C1 only. Reaches usable speed much sooner, at the
+#                      cost of peak throughput this workload never reaches anyway.
+#   Xss512k            Tomcat's thread pool at the default 1 MB stack each is real money
+#                      when the whole container has 512 MB.
+ENTRYPOINT ["java", \
+            "-XX:MaxRAMPercentage=75", \
+            "-XX:+UseSerialGC", \
+            "-XX:TieredStopAtLevel=1", \
+            "-Xss512k", \
+            "-jar", "app.jar"]

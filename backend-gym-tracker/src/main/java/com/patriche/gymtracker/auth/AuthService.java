@@ -37,15 +37,18 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokens;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwt;
+    private final RefreshTokenCleaner cleaner;
     private final Duration refreshTtl;
     private final SecureRandom random = new SecureRandom();
 
     AuthService(UserRepository users, RefreshTokenRepository refreshTokens,
-                PasswordEncoder passwordEncoder, JwtService jwt, AppProperties props) {
+                PasswordEncoder passwordEncoder, JwtService jwt,
+                RefreshTokenCleaner cleaner, AppProperties props) {
         this.users = users;
         this.refreshTokens = refreshTokens;
         this.passwordEncoder = passwordEncoder;
         this.jwt = jwt;
+        this.cleaner = cleaner;
         this.refreshTtl = Duration.ofDays(props.jwt().refreshTtlDays());
     }
 
@@ -109,6 +112,9 @@ public class AuthService {
     }
 
     private TokenPair issue(User user, Instant now) {
+        // Every login and rotation lands here, which makes it the cheapest place to hang
+        // housekeeping: the connection is already open and the database already awake.
+        cleaner.sweepIfDue(now);
         String access = jwt.issueAccessToken(user.getId(), now);
         byte[] raw = new byte[32];
         random.nextBytes(raw);

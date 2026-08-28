@@ -15,12 +15,22 @@ services:
 
     # Render restarts the instance if this stops returning 200, and uses it to decide
     # when a new deploy is live.
-    healthCheckPath: /actuator/health
+    #
+    # Liveness, not plain /actuator/health: the default health endpoint includes a
+    # database check, so every poll ran a query against Neon and kept its compute from
+    # ever suspending - the single largest drain on the free plan's 100 CU-hours. The
+    # liveness group answers from memory. Database health is still available on
+    # /actuator/health/readiness when you actually want to ask.
+    healthCheckPath: /actuator/health/liveness
 
     envVars:
       # From the Neon dashboard. DATABASE_URL must be the JDBC form:
-      #   jdbc:postgresql://ep-xxx.region.aws.neon.tech/gymtracker?sslmode=require
+      #   jdbc:postgresql://ep-xxx-pooler.region.aws.neon.tech/gymtracker?sslmode=require
       # sslmode=require is mandatory - Neon refuses unencrypted connections.
+      #
+      # Prefer the -pooler host shown in the dashboard. It fronts the database with
+      # PgBouncer, so short-lived connections from a pool that drains to zero reconnect
+      # without paying a fresh Postgres backend each time.
       - key: DATABASE_URL
         sync: false
       - key: DB_USER

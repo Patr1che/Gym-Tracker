@@ -8,8 +8,11 @@ import java.util.List;
 @Table(name = "exercise_logs")
 public class ExerciseLogEntry {
 
+    /** SEQUENCE for batchable inserts - see the note on {@link SetLogEntry#id}. */
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "exercise_logs_seq")
+    @SequenceGenerator(name = "exercise_logs_seq", sequenceName = "exercise_logs_id_seq",
+                       allocationSize = 50)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

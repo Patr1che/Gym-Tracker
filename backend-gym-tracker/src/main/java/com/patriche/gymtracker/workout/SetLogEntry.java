@@ -8,8 +8,15 @@ import java.math.BigDecimal;
 @Table(name = "set_logs")
 public class SetLogEntry {
 
+    /**
+     * SEQUENCE, not IDENTITY: identity ids come back one row at a time, which stops
+     * Hibernate batching inserts. allocationSize must equal the sequence's INCREMENT BY
+     * in V3__minimize_free_tier_footprint.sql.
+     */
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "set_logs_seq")
+    @SequenceGenerator(name = "set_logs_seq", sequenceName = "set_logs_id_seq",
+                       allocationSize = 50)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

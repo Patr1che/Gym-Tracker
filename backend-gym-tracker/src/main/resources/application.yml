@@ -7,13 +7,28 @@ spring:
     password: ${DB_PASSWORD:gym}
     hikari:
       maximum-pool-size: 5      # Neon's free tier caps connections
-      minimum-idle: 1
+      # minimum-idle: 0 is the whole point. Neon suspends the compute after 5 minutes
+      # with no client, but a pooled connection held open is a client, so the old
+      # minimum-idle: 1 kept the database awake around the clock and would have spent
+      # the month's 100 CU-hours in about 17 days. Draining the pool lets it sleep.
+      minimum-idle: 0
+      idle-timeout: 30000       # release a spare connection after 30s
+      max-lifetime: 600000      # 10 min, under Neon's own connection cap
+      # keepalive-time is deliberately unset: it pings the database on a timer, which is
+      # exactly the wake-up this configuration exists to avoid.
   jpa:
     hibernate:
       ddl-auto: validate        # Flyway owns the schema - never 'update'
     open-in-view: false
     properties:
       hibernate.jdbc.time_zone: UTC
+      # Compute time on Neon is billed by the wall clock, so round trips are the cost to
+      # cut. Syncing a workout inserts one log, its exercises and every set; batching
+      # sends those as a few statements instead of dozens. Requires the entities' SEQUENCE
+      # ids - Hibernate silently disables batching for IDENTITY.
+      hibernate.jdbc.batch_size: 50
+      hibernate.order_inserts: true
+      hibernate.order_updates: true
   flyway:
     enabled: true
   jackson:
@@ -32,6 +47,16 @@ management:
     health:
       probes:
         enabled: true
+      # Render polls the health check continuously, and the default /actuator/health
+      # includes Spring's db indicator - meaning every poll ran a query and kept Neon's
+      # compute awake permanently. Splitting the groups lets render.yaml point its check
+      # at liveness, which touches nothing, while readiness still reports on the
+      # database for when it is asked directly.
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db
 
 springdoc:
   swagger-ui:
