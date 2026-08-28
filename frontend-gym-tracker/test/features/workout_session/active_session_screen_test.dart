@@ -23,6 +23,7 @@ void main() {
   late DateTime now;
 
   List<Override> overrides() => [
+        localOnly,
         clockProvider.overrideWithValue(() => now),
         uuidProvider.overrideWithValue(() => 'log_1'),
         favoritesBoxProvider.overrideWithValue(FakeJsonBox()),

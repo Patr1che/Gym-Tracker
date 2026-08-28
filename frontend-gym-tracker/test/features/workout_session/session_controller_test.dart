@@ -20,6 +20,7 @@ void main() {
   ProviderContainer makeContainer() {
     final container = ProviderContainer(
       overrides: [
+        localOnly,
         clockProvider.overrideWithValue(() => now),
         uuidProvider.overrideWithValue(() => 'id_${idCounter++}'),
         authRepositoryProvider.overrideWithValue(authRepo),

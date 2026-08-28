@@ -27,3 +27,5 @@ final exerciseVideosBoxProvider =
 final customProgramsBoxProvider =
     Provider<JsonBox>((ref) => _open(HiveBoxes.customPrograms));
 final metaBoxProvider = Provider<JsonBox>((ref) => _open(HiveBoxes.meta));
+final syncStateBoxProvider =
+    Provider<JsonBox>((ref) => _open(HiveBoxes.syncState));

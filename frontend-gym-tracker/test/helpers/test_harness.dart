@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gym_tracker/core/models/enums.dart';
+import 'package:gym_tracker/core/network/network_providers.dart';
 import 'package:gym_tracker/core/models/exercise.dart';
 import 'package:gym_tracker/core/models/program.dart';
 import 'package:gym_tracker/core/models/user.dart';
@@ -252,6 +253,13 @@ Program testProgram({
             ),
           ],
     );
+
+/// Keeps a test on the local-only code path.
+///
+/// Without it, any test that builds the real repository providers gets the
+/// server-backed implementations, which reach for [tokenStoreProvider] and the
+/// network. These tests are about local behaviour, so sync is switched off.
+final localOnly = syncEnabledProvider.overrideWithValue(false);
 
 /// Pumps [child] inside a themed MaterialApp with the given provider overrides.
 Future<void> pumpApp(

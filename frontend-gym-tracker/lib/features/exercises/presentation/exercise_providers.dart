@@ -2,8 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/enums.dart';
 import '../../../core/models/exercise.dart';
+import '../../../core/network/network_providers.dart';
 import '../../../core/persistence/hive_boxes_provider.dart';
 import '../../../core/persistence/video_catalog.dart';
+import '../../../core/sync/sync_providers.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../data/hive_exercise_repository.dart';
 import '../domain/exercise_repository.dart';
@@ -65,6 +67,11 @@ class FavoritesController extends Notifier<Set<String>> {
       await ref
           .read(favoritesBoxProvider)
           .put(userId, {'ids': next.toList()});
+      if (ref.read(syncEnabledProvider)) {
+        // Favourites are a whole-set replace, so one flag is enough to say the
+        // set differs from the server's.
+        await ref.read(syncStateProvider).markFavoritesDirty();
+      }
     }
   }
 }

@@ -1,13 +1,24 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/measurement_entry.dart';
+import '../../../core/network/network_providers.dart';
 import '../../../core/persistence/hive_boxes_provider.dart';
+import '../../../core/providers/app_providers.dart';
+import '../../../core/sync/sync_providers.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../data/hive_measurement_repository.dart';
+import '../data/syncing_measurement_repository.dart';
 import '../domain/measurement_repository.dart';
 
-final measurementRepositoryProvider = Provider<MeasurementRepository>(
-    (ref) => HiveMeasurementRepository(ref.watch(measurementsBoxProvider)));
+final measurementRepositoryProvider = Provider<MeasurementRepository>((ref) {
+  final hive = HiveMeasurementRepository(ref.watch(measurementsBoxProvider));
+  if (!ref.watch(syncEnabledProvider)) return hive;
+  return SyncingMeasurementRepository(
+    hive,
+    ref.watch(syncStateProvider),
+    ref.watch(clockProvider),
+  );
+});
 
 /// Measurement entries for the signed-in user, newest first.
 class MeasurementsController extends Notifier<List<MeasurementEntry>> {

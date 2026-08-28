@@ -1,19 +1,33 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/user.dart';
+import '../../../core/network/network_providers.dart';
 import '../../../core/persistence/hive_boxes_provider.dart';
 import '../../../core/providers/app_providers.dart';
+import '../../../core/sync/sync_providers.dart';
+import '../data/api_auth_repository.dart';
 import '../data/hive_auth_repository.dart';
 import '../data/session_store.dart';
 import '../domain/auth_repository.dart';
 
-final authRepositoryProvider = Provider<AuthRepository>(
-  (ref) => HiveAuthRepository(
-    ref.watch(usersBoxProvider),
+/// Server-backed when sync is on, local-only otherwise. Both implementations
+/// mirror the signed-in user into the same box, so the synchronous lookups the
+/// router depends on work either way.
+final authRepositoryProvider = Provider<AuthRepository>((ref) {
+  final users = ref.watch(usersBoxProvider);
+  if (ref.watch(syncEnabledProvider)) {
+    return ApiAuthRepository(
+      ref.watch(apiClientProvider),
+      users,
+      ref.watch(tokenStoreProvider),
+    );
+  }
+  return HiveAuthRepository(
+    users,
     newId: ref.watch(uuidProvider),
     now: ref.watch(clockProvider),
-  ),
-);
+  );
+});
 
 final sessionStoreProvider =
     Provider<SessionStore>((ref) => SessionStore(ref.watch(sessionBoxProvider)));
@@ -87,6 +101,26 @@ class AuthController extends Notifier<AuthState> {
 
   Future<void> logout() async {
     await ref.read(sessionStoreProvider).clear();
+    if (ref.read(syncEnabledProvider)) {
+      // Revoke server-side as well, so a stolen refresh token dies with the
+      // session rather than staying valid for its full 30 days.
+      final tokens = ref.read(tokenStoreProvider);
+      final refresh = tokens.refreshToken;
+      if (refresh != null) {
+        try {
+          await ref
+              .read(apiClientProvider)
+              .post('/auth/logout', body: {'refreshToken': refresh});
+        } catch (_) {
+          // Offline logout still clears local tokens; the token expires anyway.
+        }
+      }
+      await tokens.clear();
+      // The cursor and dirty markers belong to the account that just left. A
+      // different user signing in on this device must start from a full pull,
+      // not resume someone else's position.
+      await ref.read(syncStateProvider).reset();
+    }
     state = const AuthState();
   }
 

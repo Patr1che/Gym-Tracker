@@ -15,6 +15,7 @@ void main() {
   late FakeJsonBox favoritesBox;
 
   List<Override> overrides() => [
+        localOnly,
         authRepositoryProvider
             .overrideWithValue(FakeAuthRepository(users: [testUser()])),
         sessionStoreProvider.overrideWithValue(

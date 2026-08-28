@@ -14,6 +14,12 @@ abstract final class HiveBoxes {
   static const String customPrograms = 'custom_programs';
   static const String meta = 'meta';
 
+  /// Sync bookkeeping: the server cursor, which records are waiting to be
+  /// pushed, and which deletions still need to reach the server. Kept out of the
+  /// domain models so the records themselves - and the backup format - stay
+  /// exactly as they were.
+  static const String syncState = 'sync_state';
+
   static const List<String> all = [
     users,
     session,
@@ -27,5 +33,6 @@ abstract final class HiveBoxes {
     exerciseVideos,
     customPrograms,
     meta,
+    syncState,
   ];
 }

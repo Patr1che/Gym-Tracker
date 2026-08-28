@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gym_tracker/app.dart';
+import 'package:gym_tracker/core/network/network_providers.dart';
 import 'package:gym_tracker/core/persistence/hive_boxes_provider.dart';
 import 'package:gym_tracker/seed/seeder.dart';
 
@@ -56,6 +57,10 @@ void main() {
   });
 
   List<Override> overrides() => [
+        // This is the one test that builds the real provider graph, so it would
+        // otherwise construct the server-backed auth repository and block on a
+        // network call. The flows under test are local ones.
+        syncEnabledProvider.overrideWithValue(false),
         usersBoxProvider.overrideWithValue(users),
         sessionBoxProvider.overrideWithValue(session),
         settingsBoxProvider.overrideWithValue(settings),

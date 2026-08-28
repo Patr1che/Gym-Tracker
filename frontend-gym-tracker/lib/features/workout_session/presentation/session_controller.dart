@@ -10,16 +10,27 @@ import '../../../core/domain/workout_calculator.dart';
 import '../../../core/models/exercise.dart';
 import '../../../core/models/program.dart';
 import '../../../core/models/workout_log.dart';
+import '../../../core/network/network_providers.dart';
 import '../../../core/persistence/hive_boxes_provider.dart';
 import '../../../core/providers/app_providers.dart';
+import '../../../core/sync/sync_controller.dart';
+import '../../../core/sync/sync_providers.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../settings/presentation/settings_controller.dart';
 import '../data/hive_workout_log_repository.dart';
+import '../data/syncing_workout_log_repository.dart';
 import '../domain/active_session.dart';
 import '../domain/workout_log_repository.dart';
 
-final workoutLogRepositoryProvider = Provider<WorkoutLogRepository>(
-    (ref) => HiveWorkoutLogRepository(ref.watch(workoutLogsBoxProvider)));
+final workoutLogRepositoryProvider = Provider<WorkoutLogRepository>((ref) {
+  final hive = HiveWorkoutLogRepository(ref.watch(workoutLogsBoxProvider));
+  if (!ref.watch(syncEnabledProvider)) return hive;
+  return SyncingWorkoutLogRepository(
+    hive,
+    ref.watch(syncStateProvider),
+    ref.watch(clockProvider),
+  );
+});
 
 /// Bumped whenever a workout log is written, so derived providers re-read.
 class WorkoutLogsRevision extends Notifier<int> {
@@ -34,6 +45,10 @@ final workoutLogsRevisionProvider =
 /// All workout logs for the signed-in user, newest first.
 final workoutLogsProvider = Provider<List<WorkoutLog>>((ref) {
   ref.watch(workoutLogsRevisionProvider);
+  // A sync pull writes straight into Hive, so history has to re-read on that
+  // signal too - otherwise pulled workouts stay invisible until the next local
+  // write happens to bump the revision.
+  ref.watch(syncRevisionProvider);
   final userId = ref.watch(authControllerProvider.select((a) => a.user?.id));
   if (userId == null) return const [];
   return ref.watch(workoutLogRepositoryProvider).forUser(userId);
@@ -267,6 +282,11 @@ class SessionController extends Notifier<ActiveSessionState?> {
     state = null;
     await ref.read(activeSessionBoxProvider).delete(session.userId);
     ref.read(workoutLogsRevisionProvider.notifier).bump();
+
+    // Finishing a workout is the moment worth pushing: it is the record the
+    // user most wants safe. Not awaited - the summary sheet must appear
+    // immediately, and a failed push simply stays queued.
+    unawaited(ref.read(syncControllerProvider.notifier).syncNow());
 
     return SessionSummary(log: log, newPrs: newPrs);
   }

@@ -3,13 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/enums.dart';
 import '../../../core/models/user_settings.dart';
+import '../../../core/network/network_providers.dart';
 import '../../../core/persistence/hive_boxes_provider.dart';
+import '../../../core/sync/sync_providers.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../data/hive_settings_repository.dart';
+import '../data/syncing_settings_repository.dart';
 import '../domain/settings_repository.dart';
 
-final settingsRepositoryProvider = Provider<SettingsRepository>(
-    (ref) => HiveSettingsRepository(ref.watch(settingsBoxProvider)));
+final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
+  final hive = HiveSettingsRepository(ref.watch(settingsBoxProvider));
+  if (!ref.watch(syncEnabledProvider)) return hive;
+  return SyncingSettingsRepository(hive, ref.watch(syncStateProvider));
+});
 
 /// Per-user settings; falls back to defaults while signed out.
 class SettingsController extends Notifier<UserSettings> {

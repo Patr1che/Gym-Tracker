@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/router/app_router.dart';
+import 'core/sync/sync_controller.dart';
 import 'core/theme/app_theme.dart';
 import 'features/settings/presentation/settings_controller.dart';
 
@@ -12,6 +13,9 @@ class GymTrackerApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
+    // Watched purely to keep the controller alive: it rebuilds when the signed-in
+    // user changes, which is what starts and stops the background sync.
+    ref.watch(syncControllerProvider);
     return MaterialApp.router(
       title: 'GymTracker',
       debugShowCheckedModeBanner: false,
