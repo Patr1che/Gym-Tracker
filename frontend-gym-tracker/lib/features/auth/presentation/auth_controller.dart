@@ -42,6 +42,11 @@ class AuthState {
 
   bool get signedIn => user != null;
   bool get onboarded => user?.profile != null;
+
+  /// Local-only accounts have no server to confirm with, and User.fromJson
+  /// treats a missing flag as confirmed, so this is only ever false for a
+  /// server-backed account that genuinely has not verified yet.
+  bool get emailVerified => user?.emailVerified ?? false;
 }
 
 class AuthController extends Notifier<AuthState> {

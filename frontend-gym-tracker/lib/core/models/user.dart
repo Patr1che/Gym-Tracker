@@ -69,7 +69,7 @@ class User {
     required this.salt,
     required this.createdAt,
     required this.photoSeed,
-    this.emailVerified = false,
+    this.emailVerified = true,
     this.profile,
   });
 
@@ -85,9 +85,10 @@ class User {
   /// Seed for the generated avatar (initials + gradient variant).
   final int photoSeed;
 
-  /// Gates sync, never sign-in. False means the app works exactly as it always
-  /// has, offline, and simply keeps everything on this device until confirmed.
-  /// Local-only builds have no server to confirm with, so they treat it as true.
+  /// Whether the server has confirmed this address. Defaults to true, and only
+  /// a server response ever sets it false: an account created locally - the
+  /// local-only build, or a test - has nothing to verify against, and treating
+  /// those as unconfirmed would strand them on a screen no code can ever reach.
   final bool emailVerified;
 
   final UserProfile? profile;

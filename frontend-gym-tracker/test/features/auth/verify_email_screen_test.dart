@@ -70,18 +70,29 @@ void main() {
     expect(authRepo.findById(testUser().id)!.emailVerified, isTrue);
   });
 
-  // The screen must never trap anyone: verification gates sync, not the app.
-  testWidgets('can be skipped', (tester) async {
+  // Verification is mandatory, so there must be no way past it but the code.
+  testWidgets('offers no way to skip', (tester) async {
     await pumpApp(tester, const VerifyEmailScreen(),
         overrides: overrides(), withRouter: true);
 
-    final skip = find.text("I'll do this later");
-    await tester.ensureVisible(skip);
+    expect(find.text("I'll do this later"), findsNothing);
+    expect(find.textContaining('Skip'), findsNothing);
+  });
+
+  // The one way out without a code. Without it a mistyped address would lock
+  // the account out of the app for good, with no reachable inbox.
+  testWidgets('signing out is offered for a mistyped address', (tester) async {
+    await pumpApp(tester, const VerifyEmailScreen(),
+        overrides: overrides(), withRouter: true);
+
+    final signOut = find.text('Wrong email? Sign out');
+    await tester.ensureVisible(signOut);
     await tester.pumpAndSettle();
-    await tester.tap(skip);
+    await tester.tap(signOut);
     await tester.pumpAndSettle();
 
-    expect(find.byType(VerifyEmailScreen), findsNothing);
+    // Confirms first - signing out by accident here loses the session.
+    expect(find.text('Use a different email?'), findsOneWidget);
   });
 
   testWidgets('the resend button waits out the cooldown first', (tester) async {

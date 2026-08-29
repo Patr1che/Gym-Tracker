@@ -45,16 +45,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       final onAuthPage = Routes.authPaths.contains(path);
 
       if (!auth.signedIn) return onAuthPage ? null : Routes.login;
-      if (!auth.onboarded) {
-        // Verification sits alongside onboarding rather than gating it: a new
-        // user can confirm their email first, or skip and come back. Blocking
-        // onboarding on it would make the offline app depend on a mail round
-        // trip it is designed not to need.
-        return path == Routes.onboarding || path == Routes.verifyEmail
-            ? null
-            : Routes.onboarding;
+
+      // Verification comes before everything else in the app. This is the
+      // enforcement: removing the skip button alone would not be enough,
+      // because any other route would still be reachable by URL.
+      if (!auth.emailVerified) {
+        return path == Routes.verifyEmail ? null : Routes.verifyEmail;
       }
-      if (onAuthPage || path == Routes.onboarding) return Routes.home;
+
+      if (!auth.onboarded) {
+        return path == Routes.onboarding ? null : Routes.onboarding;
+      }
+      if (onAuthPage || path == Routes.onboarding || path == Routes.verifyEmail) {
+        return Routes.home;
+      }
       return null;
     },
     routes: [

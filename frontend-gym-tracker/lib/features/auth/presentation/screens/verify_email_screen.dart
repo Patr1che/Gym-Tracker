@@ -17,10 +17,10 @@ import '../widgets/auth_brand.dart';
 
 /// Confirms the six-digit code mailed at registration.
 ///
-/// Skippable on purpose. Verification gates sync, never the app: an unverified
-/// user gets the whole offline experience and their data simply stays on this
-/// device until they confirm. Blocking here would strand someone who signed up
-/// with no signal, in an app built to work without one.
+/// Mandatory: the router sends any signed-in, unconfirmed account straight back
+/// here, so there is no route around it. The only way out without a code is to
+/// sign out - which exists because a mistyped address would otherwise lock the
+/// account out of the app permanently, with no way to reach a working inbox.
 class VerifyEmailScreen extends ConsumerStatefulWidget {
   const VerifyEmailScreen({super.key});
 
@@ -108,11 +108,39 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     showSuccessSnack(context, 'A new code is on its way.');
   }
 
-  /// Onboarding when it still needs doing, otherwise home. The router would
-  /// redirect anyway; going straight there avoids a visible bounce.
+  /// Only reached once verified. The router would redirect anyway; going
+  /// straight there avoids a visible bounce.
   void _leave() {
     final onboarded = ref.read(authControllerProvider).onboarded;
     context.go(onboarded ? Routes.home : Routes.onboarding);
+  }
+
+  /// The escape hatch for a mistyped address. Not a way to skip verification -
+  /// it ends the session, so the next sign-in still has to confirm.
+  Future<void> _signOut() async {
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Use a different email?'),
+            content: const Text(
+                'This signs you out. Your account keeps the address you '
+                'registered with, so you can register again with the right one.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Sign out'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (!confirmed || !mounted) return;
+    await ref.read(authControllerProvider.notifier).logout();
+    if (mounted) context.go(Routes.login);
   }
 
   String? _validateCode(String? value) {
@@ -147,8 +175,8 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Text(
-                      'We sent a code to $email. Confirming is what lets your '
-                      'workouts sync across devices - the app works either way.',
+                      'We sent a code to $email. Confirm it to finish setting '
+                      'up your account and sync across devices.',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ),
@@ -188,8 +216,8 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
             ),
             const SizedBox(height: AppSpacing.md),
             TextButton(
-              onPressed: _verifying ? null : _leave,
-              child: const Text("I'll do this later"),
+              onPressed: _verifying ? null : _signOut,
+              child: const Text('Wrong email? Sign out'),
             ),
           ],
         ),
