@@ -59,17 +59,29 @@ class MailConfig {
                             ThreadPoolExecutor mailExecutor,
                             @Value("${spring.mail.host:}") String host,
                             @Value("${spring.mail.username:}") String username) {
+        // Preferred when present: Render blocks outbound SMTP on free web services, so
+        // the relay cannot deliver there at all and only HTTPS gets through.
+        String apiKey = props.mail().brevoApiKey();
+        if (apiKey != null && !apiKey.isBlank()) {
+            log.info("Sending verification email via the Brevo API as {}",
+                    props.mail().from());
+            return new BrevoApiEmailSender(apiKey, props.mail(), mailExecutor);
+        }
+
         if (host == null || host.isBlank()) {
-            log.warn("MAIL_HOST is not set - verification emails will be written to this "
-                    + "log instead of sent. Set MAIL_HOST, MAIL_USERNAME, MAIL_PASSWORD "
-                    + "and MAIL_FROM to deliver them.");
+            log.warn("No mail transport configured - verification codes will be written "
+                    + "to this log instead of sent. Set BREVO_API_KEY (preferred, and the "
+                    + "only option on hosts that block SMTP), or MAIL_HOST with "
+                    + "MAIL_USERNAME and MAIL_PASSWORD.");
             return loggingSender();
         }
         if (username == null || username.isBlank()) {
             log.warn("MAIL_HOST is set to {} but MAIL_USERNAME is empty; the provider "
                     + "will almost certainly reject these sends.", host);
         }
-        log.info("Sending verification email via {} as {}", host, props.mail().from());
+        log.warn("Sending verification email over SMTP via {} as {}. Note that hosts "
+                + "including Render's free tier block outbound SMTP ports; set "
+                + "BREVO_API_KEY to send over HTTPS instead.", host, props.mail().from());
         return smtpSender(mailSender, props, mailExecutor);
     }
 

@@ -92,6 +92,10 @@ app:
     # Must be the address verified in Brevo, or the provider rejects the send.
     from: ${MAIL_FROM:no-reply@gymtracker.local}
     from-name: ${MAIL_FROM_NAME:GymTracker}
+    # Preferred over SMTP wherever outbound SMTP ports are blocked, which includes
+    # Render's free web services (25, 465 and 587 are all refused there). This is
+    # Brevo's API key - xkeysib-..., a different credential from the xsmtpsib- SMTP key.
+    brevo-api-key: ${BREVO_API_KEY:}
     code-ttl-minutes: 10
     resend-cooldown-minutes: 5
   housekeeping:

@@ -12,7 +12,7 @@ public record AppProperties(Jwt jwt, Cors cors, Housekeeping housekeeping, Mail 
      * user types back into the app, never a link, so the API never needs to know its own
      * public address.
      */
-    public record Mail(String from, String fromName,
+    public record Mail(String from, String fromName, String brevoApiKey,
                        int codeTtlMinutes, int resendCooldownMinutes) {}
 
     public record Jwt(String secret, long accessTtlMinutes, long refreshTtlDays) {}
