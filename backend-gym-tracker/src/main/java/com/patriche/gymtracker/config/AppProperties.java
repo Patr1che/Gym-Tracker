@@ -8,10 +8,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record AppProperties(Jwt jwt, Cors cors, Housekeeping housekeeping, Mail mail) {
 
     /**
-     * Verification email settings. {@code publicUrl} is this API's own base URL, because
-     * the link is opened in a browser and must come back here - not to the app origin.
+     * Verification email settings. No base URL here: verification mails carry a code the
+     * user types back into the app, never a link, so the API never needs to know its own
+     * public address.
      */
-    public record Mail(String from, String fromName, String publicUrl,
+    public record Mail(String from, String fromName,
                        int codeTtlMinutes, int resendCooldownMinutes) {}
 
     public record Jwt(String secret, long accessTtlMinutes, long refreshTtlDays) {}

@@ -92,9 +92,6 @@ app:
     # Must be the address verified in Brevo, or the provider rejects the send.
     from: ${MAIL_FROM:no-reply@gymtracker.local}
     from-name: ${MAIL_FROM_NAME:GymTracker}
-    # This API's own public base URL. The verification link is opened in a browser and
-    # must come back here - it is not an app deep link.
-    public-url: ${PUBLIC_URL:http://localhost:8097}
     code-ttl-minutes: 10
     resend-cooldown-minutes: 5
   housekeeping:
