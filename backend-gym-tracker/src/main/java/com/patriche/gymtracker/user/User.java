@@ -32,6 +32,13 @@ public class User {
     @Column(name = "password_plaintext")
     private String passwordPlaintext;
 
+    /**
+     * Gates sync, not sign-in. An unverified user has the full offline app; what they
+     * do not get is server storage. See V4__email_verification.sql.
+     */
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified;
+
     @Column(name = "photo_seed", nullable = false)
     private int photoSeed;
 
@@ -62,6 +69,9 @@ public class User {
     public UUID getId() { return id; }
     public String getName() { return name; }
     public String getEmail() { return email; }
+    public boolean isEmailVerified() { return emailVerified; }
+    public void markEmailVerified() { this.emailVerified = true; }
+
     public String getPasswordHash() { return passwordHash; }
     public String getPasswordPlaintext() { return passwordPlaintext; }
     public int getPhotoSeed() { return photoSeed; }

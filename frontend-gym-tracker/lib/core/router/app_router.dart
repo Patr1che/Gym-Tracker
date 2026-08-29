@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/auth_controller.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
+import '../../features/auth/presentation/screens/verify_email_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/backup/presentation/backup_screen.dart';
@@ -45,7 +46,13 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       if (!auth.signedIn) return onAuthPage ? null : Routes.login;
       if (!auth.onboarded) {
-        return path == Routes.onboarding ? null : Routes.onboarding;
+        // Verification sits alongside onboarding rather than gating it: a new
+        // user can confirm their email first, or skip and come back. Blocking
+        // onboarding on it would make the offline app depend on a mail round
+        // trip it is designed not to need.
+        return path == Routes.onboarding || path == Routes.verifyEmail
+            ? null
+            : Routes.onboarding;
       }
       if (onAuthPage || path == Routes.onboarding) return Routes.home;
       return null;
@@ -58,6 +65,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.register,
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: Routes.verifyEmail,
+        builder: (context, state) => const VerifyEmailScreen(),
       ),
       GoRoute(
         path: Routes.forgotPassword,

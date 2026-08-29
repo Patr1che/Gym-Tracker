@@ -5,7 +5,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /** Binds the `app.*` block of application.yml. */
 @ConfigurationProperties(prefix = "app")
-public record AppProperties(Jwt jwt, Cors cors, Housekeeping housekeeping) {
+public record AppProperties(Jwt jwt, Cors cors, Housekeeping housekeeping, Mail mail) {
+
+    /**
+     * Verification email settings. {@code publicUrl} is this API's own base URL, because
+     * the link is opened in a browser and must come back here - not to the app origin.
+     */
+    public record Mail(String from, String fromName, String publicUrl,
+                       int codeTtlMinutes, int resendCooldownMinutes) {}
 
     public record Jwt(String secret, long accessTtlMinutes, long refreshTtlDays) {}
 

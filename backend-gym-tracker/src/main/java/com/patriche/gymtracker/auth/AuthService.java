@@ -38,17 +38,20 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwt;
     private final HousekeepingSweeper sweeper;
+    private final EmailVerificationService verification;
     private final Duration refreshTtl;
     private final SecureRandom random = new SecureRandom();
 
     AuthService(UserRepository users, RefreshTokenRepository refreshTokens,
                 PasswordEncoder passwordEncoder, JwtService jwt,
-                HousekeepingSweeper sweeper, AppProperties props) {
+                HousekeepingSweeper sweeper, EmailVerificationService verification,
+                AppProperties props) {
         this.users = users;
         this.refreshTokens = refreshTokens;
         this.passwordEncoder = passwordEncoder;
         this.jwt = jwt;
         this.sweeper = sweeper;
+        this.verification = verification;
         this.refreshTtl = Duration.ofDays(props.jwt().refreshTtlDays());
     }
 
@@ -67,6 +70,9 @@ public class AuthService {
                 req.password(),
                 Math.abs(email.hashCode()), now);
         users.save(user);
+        // After save so the token's foreign key resolves. Never throws: a provider
+        // outage must not fail a registration that otherwise succeeded.
+        verification.sendCode(user, now);
         return issue(user, now);
     }
 
@@ -126,7 +132,7 @@ public class AuthService {
 
     public static UserResponse toResponse(User u) {
         return new UserResponse(u.getId(), u.getName(), u.getEmail(), u.getCreatedAt(),
-                u.getPhotoSeed(), toProfileResponse(u.getProfile()));
+                u.getPhotoSeed(), u.isEmailVerified(), toProfileResponse(u.getProfile()));
     }
 
     private static ProfileResponse toProfileResponse(UserProfile p) {

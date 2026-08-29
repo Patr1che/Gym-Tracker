@@ -1,6 +1,16 @@
 spring:
   application:
     name: gymtracker-api
+  # Unset locally, which selects the logging sender in MailConfig - the flow works end to
+  # end without a provider, with the link written to the log.
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
   datasource:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5433/gymtracker}
     username: ${DB_USER:gym}
@@ -69,6 +79,15 @@ app:
     refresh-ttl-days: 30
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:5555}
+  mail:
+    # Must be the address verified in Brevo, or the provider rejects the send.
+    from: ${MAIL_FROM:no-reply@gymtracker.local}
+    from-name: ${MAIL_FROM_NAME:GymTracker}
+    # This API's own public base URL. The verification link is opened in a browser and
+    # must come back here - it is not an app deep link.
+    public-url: ${PUBLIC_URL:http://localhost:8097}
+    code-ttl-minutes: 10
+    resend-cooldown-minutes: 5
   housekeeping:
     # How long a tombstone survives before the row is deleted for good. Long enough that
     # a device offline for a season still receives the deletion in a pull; short enough

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/domain/validators.dart';
+import '../../../../core/network/network_providers.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -57,8 +58,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (!mounted) return;
     if (error != null) {
       showErrorSnack(context, error);
+      return;
     }
-    // On success the router redirect sends the new user to onboarding.
+    // A code is already in their inbox, so go straight to entering it. The
+    // screen is skippable - the router would otherwise send them to onboarding,
+    // which is exactly where "I'll do this later" leads.
+    if (ref.read(syncEnabledProvider)) context.go(Routes.verifyEmail);
   }
 
   @override

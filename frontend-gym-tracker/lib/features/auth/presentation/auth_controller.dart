@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/user.dart';
 import '../../../core/network/network_providers.dart';
 import '../../../core/persistence/hive_boxes_provider.dart';
 import '../../../core/providers/app_providers.dart';
+import '../../../core/sync/sync_controller.dart';
 import '../../../core/sync/sync_providers.dart';
 import '../data/api_auth_repository.dart';
 import '../data/hive_auth_repository.dart';
@@ -96,6 +99,20 @@ class AuthController extends Notifier<AuthState> {
       return e.message;
     }
   }
+
+  /// Confirms the emailed code and refreshes local state, so the UI reacts at
+  /// once instead of waiting for the next token refresh to reveal the change.
+  Future<void> verifyEmail(String code) async {
+    final updated = await ref.read(authRepositoryProvider).verifyEmail(code);
+    state = AuthState(user: updated);
+    // Everything queued while unverified can go up now.
+    if (ref.read(syncEnabledProvider)) {
+      unawaited(ref.read(syncControllerProvider.notifier).syncNow());
+    }
+  }
+
+  Future<void> resendVerificationCode() =>
+      ref.read(authRepositoryProvider).resendVerificationCode();
 
   Future<bool> resetPassword({
     required String email,

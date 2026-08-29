@@ -2,6 +2,7 @@ package com.patriche.gymtracker.auth.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.UUID;
@@ -24,6 +25,10 @@ public final class AuthDtos {
 
     public record ForgotPasswordRequest(@NotBlank @Email String email) {}
 
+    public record VerifyEmailRequest(
+            @NotBlank @Pattern(regexp = "\\d{6}", message = "Enter the 6-digit code")
+            String code) {}
+
     public record TokenPair(String accessToken, String refreshToken, UserResponse user) {}
 
     public record ProfileResponse(
@@ -32,5 +37,5 @@ public final class AuthDtos {
 
     public record UserResponse(
             UUID id, String name, String email, Instant createdAt,
-            int photoSeed, ProfileResponse profile) {}
+            int photoSeed, boolean emailVerified, ProfileResponse profile) {}
 }

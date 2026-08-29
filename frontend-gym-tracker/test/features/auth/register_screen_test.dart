@@ -50,7 +50,9 @@ void main() {
   }
 
   testWidgets('accepts a short, letters-only password', (tester) async {
-    await pumpApp(tester, const RegisterScreen(), overrides: overrides());
+    // Registration now routes to the verification screen, so a router must exist.
+    await pumpApp(tester, const RegisterScreen(),
+        overrides: overrides(), withRouter: true);
     await fillForm(tester, password: 'abc', confirm: 'abc');
     await submit(tester);
 
@@ -83,7 +85,8 @@ void main() {
   });
 
   testWidgets('a valid form creates the account and signs in', (tester) async {
-    await pumpApp(tester, const RegisterScreen(), overrides: overrides());
+    await pumpApp(tester, const RegisterScreen(),
+        overrides: overrides(), withRouter: true);
     await fillForm(tester);
     await submit(tester);
 

@@ -44,6 +44,7 @@ public class HousekeepingSweeper {
     private static final Duration INTERVAL = Duration.ofHours(24);
 
     private final RefreshTokenRepository refreshTokens;
+    private final VerificationCodeRepository verificationCodes;
     private final WorkoutLogRepository workouts;
     private final MeasurementRepository measurements;
     private final FavoriteRepository favorites;
@@ -52,10 +53,13 @@ public class HousekeepingSweeper {
     /** Earliest time the next opportunistic sweep may run. */
     private final AtomicReference<Instant> nextSweep = new AtomicReference<>(Instant.EPOCH);
 
-    HousekeepingSweeper(RefreshTokenRepository refreshTokens, WorkoutLogRepository workouts,
+    HousekeepingSweeper(RefreshTokenRepository refreshTokens,
+                        VerificationCodeRepository verificationCodes,
+                        WorkoutLogRepository workouts,
                         MeasurementRepository measurements, FavoriteRepository favorites,
                         AppProperties props) {
         this.refreshTokens = refreshTokens;
+        this.verificationCodes = verificationCodes;
         this.workouts = workouts;
         this.measurements = measurements;
         this.favorites = favorites;
@@ -86,7 +90,8 @@ public class HousekeepingSweeper {
 
     private void sweep(Instant now) {
         try {
-            int tokens = refreshTokens.deleteSpent(now);
+            int tokens = refreshTokens.deleteSpent(now)
+                    + verificationCodes.deleteSpent(now);
 
             Instant before = now.minus(tombstoneRetention);
             int reaped = workouts.deleteTombstonesBefore(before)
@@ -94,7 +99,7 @@ public class HousekeepingSweeper {
                     + favorites.deleteTombstonesBefore(before);
 
             if (tokens > 0 || reaped > 0) {
-                log.info("Housekeeping: purged {} spent refresh tokens, reaped {} tombstones "
+                log.info("Housekeeping: purged {} spent tokens, reaped {} tombstones "
                         + "older than {} days", tokens, reaped, tombstoneRetention.toDays());
             }
         } catch (RuntimeException e) {

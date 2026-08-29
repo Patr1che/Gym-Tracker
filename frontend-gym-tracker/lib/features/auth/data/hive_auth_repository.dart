@@ -59,6 +59,16 @@ class HiveAuthRepository implements AuthRepository {
     return user;
   }
 
+  /// Local-only builds have no server to confirm against, and User.fromJson
+  /// already treats a missing flag as verified, so this path is never reached
+  /// from the UI. It fails loudly rather than silently pretending.
+  @override
+  Future<User> verifyEmail(String code) async =>
+      throw const AuthException('Email verification needs a connection.');
+
+  @override
+  Future<void> resendVerificationCode() async {}
+
   @override
   Future<void> updateUser(User user) => _users.put(user.id, user.toJson());
 

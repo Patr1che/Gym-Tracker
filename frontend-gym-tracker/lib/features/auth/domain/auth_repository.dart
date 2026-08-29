@@ -27,6 +27,14 @@ abstract interface class AuthRepository {
 
   Future<void> updateUser(User user);
 
+  /// Submits the six-digit code mailed at registration and returns the updated
+  /// user. Throws [AuthException] with a message worth showing when the code is
+  /// wrong, expired, or has been guessed at too many times.
+  Future<User> verifyEmail(String code);
+
+  /// Asks for a fresh code. Throws [AuthException] when throttled.
+  Future<void> resendVerificationCode();
+
   /// Local reset: identity is confirmed by matching the registered account
   /// name. Returns false when email or name doesn't match.
   Future<bool> resetPassword({

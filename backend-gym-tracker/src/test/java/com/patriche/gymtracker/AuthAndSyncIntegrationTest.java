@@ -4,9 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -30,7 +33,7 @@ import org.springframework.context.annotation.Import;
                 "app.jwt.secret=test-secret-that-is-definitely-long-enough-32",
                 "spring.jpa.hibernate.ddl-auto=validate"
         })
-@Import(TestcontainersConfiguration.class)
+@Import({TestcontainersConfiguration.class, RecordingMailConfiguration.class})
 class AuthAndSyncIntegrationTest {
 
     @LocalServerPort
@@ -58,12 +61,79 @@ class AuthAndSyncIntegrationTest {
     }
 
     @SuppressWarnings("unchecked")
-    private String registerAndGetToken(String email) {
+    private String registerWithoutVerifying(String email) {
         ResponseEntity<Map> res = call(HttpMethod.POST, "/auth/register",
                 Map.of("name", "Test", "email", email, "password", "secret123"),
                 null, Map.class);
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
         return (String) res.getBody().get("accessToken");
+    }
+
+    /**
+     * Registers and then follows the emailed link, because sync is refused until the
+     * address is confirmed. Every sync test below needs a genuinely verified account,
+     * and going through the real endpoint keeps them honest about the whole flow.
+     */
+    private String registerAndGetToken(String email) {
+        String access = registerWithoutVerifying(email);
+        confirmWithEmailedCode(access);
+        return access;
+    }
+
+    /** Reads the code out of the mail the app just sent and submits it. */
+    private void confirmWithEmailedCode(String accessToken) {
+        ResponseEntity<Map> res = call(HttpMethod.POST, "/auth/verify",
+                Map.of("code", latestEmailedCode()), accessToken, Map.class);
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    private String latestEmailedCode() {
+        String body = RecordingMailConfiguration.sentBodies
+                .get(RecordingMailConfiguration.sentBodies.size() - 1);
+        Matcher m = Pattern.compile(">\\s*(\\d{6})\\s*<").matcher(body);
+        assertThat(m.find()).as("six-digit code in the email").isTrue();
+        return m.group(1);
+    }
+
+    @Test
+    void aWrongCodeIsRejectedAndBurnsAnAttempt() {
+        String token = registerWithoutVerifying("wrongcode@example.com");
+
+        ResponseEntity<Map> bad = call(HttpMethod.POST, "/auth/verify",
+                Map.of("code", "000000"), token, Map.class);
+        assertThat(bad.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
+        // The real code still works: a wrong guess costs an attempt, not the code.
+        confirmWithEmailedCode(token);
+
+        Map<String, Object> nullCursor = new HashMap<>();
+        nullCursor.put("since", null);
+        assertThat(call(HttpMethod.POST, "/sync", nullCursor, token, Map.class)
+                .getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    void syncIsRefusedUntilTheEmailIsConfirmed() {
+        String token = registerWithoutVerifying("unverified@example.com");
+
+        Map<String, Object> nullCursor = new HashMap<>();
+        nullCursor.put("since", null);
+
+        ResponseEntity<Map> refused =
+                call(HttpMethod.POST, "/sync", nullCursor, token, Map.class);
+        assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+
+        // Sign-in is deliberately untouched: the offline app must keep working.
+        ResponseEntity<Map> login = call(HttpMethod.POST, "/auth/login",
+                Map.of("email", "unverified@example.com", "password", "secret123"),
+                null, Map.class);
+        assertThat(login.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        confirmWithEmailedCode(token);
+
+        ResponseEntity<Map> allowed =
+                call(HttpMethod.POST, "/sync", nullCursor, token, Map.class);
+        assertThat(allowed.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     @Test

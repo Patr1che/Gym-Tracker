@@ -72,6 +72,30 @@ class ApiAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<User> verifyEmail(String code) async {
+    try {
+      final data = await _api.post('/auth/verify', body: {'code': code.trim()});
+      if (data is! Map<String, dynamic>) {
+        throw const AuthException('Unexpected response from the server');
+      }
+      // The response is the updated user, so the app knows immediately rather
+      // than waiting for the next token refresh to notice.
+      return _cache(data, data['id'] as String);
+    } on ApiException catch (e) {
+      throw AuthException(e.message);
+    }
+  }
+
+  @override
+  Future<void> resendVerificationCode() async {
+    try {
+      await _api.post('/auth/verify/resend');
+    } on ApiException catch (e) {
+      throw AuthException(e.message);
+    }
+  }
+
+  @override
   Future<void> updateUser(User user) async {
     // Only the fields the server owns; credentials are never sent back.
     final profile = user.profile;

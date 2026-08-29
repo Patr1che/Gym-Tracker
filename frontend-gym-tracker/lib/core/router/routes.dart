@@ -2,6 +2,7 @@ abstract final class Routes {
   static const login = '/login';
   static const register = '/register';
   static const forgotPassword = '/forgot-password';
+  static const verifyEmail = '/verify-email';
   static const onboarding = '/onboarding';
 
   static const home = '/home';

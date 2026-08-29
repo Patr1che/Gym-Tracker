@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/measurement_entry.dart';
 import '../../../core/network/network_providers.dart';
 import '../../../core/persistence/hive_boxes_provider.dart';
 import '../../../core/providers/app_providers.dart';
+import '../../../core/sync/sync_controller.dart';
 import '../../../core/sync/sync_providers.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../data/hive_measurement_repository.dart';
@@ -17,6 +20,10 @@ final measurementRepositoryProvider = Provider<MeasurementRepository>((ref) {
     hive,
     ref.watch(syncStateProvider),
     ref.watch(clockProvider),
+    // Read lazily: syncControllerProvider watches auth, and resolving it during
+    // this provider's build would widen the dependency graph for no reason.
+    onChanged: () =>
+        unawaited(ref.read(syncControllerProvider.notifier).syncNow()),
   );
 });
 

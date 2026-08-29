@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // Riverpod 3 exports the Override type from misc.dart, not the main library.
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:gym_tracker/core/models/enums.dart';
 import 'package:gym_tracker/core/network/network_providers.dart';
 import 'package:gym_tracker/core/models/exercise.dart';
 import 'package:gym_tracker/core/models/program.dart';
 import 'package:gym_tracker/core/models/user.dart';
 import 'package:gym_tracker/core/models/workout_log.dart';
+import 'package:gym_tracker/core/router/routes.dart';
 import 'package:gym_tracker/core/theme/app_theme.dart';
 import 'package:gym_tracker/features/auth/domain/auth_repository.dart';
 import 'package:gym_tracker/features/exercises/domain/exercise_repository.dart';
@@ -31,8 +33,26 @@ class FakeAuthRepository implements AuthRepository {
   final Map<String, User> _users = {};
   var _nextId = 0;
 
+  /// Codes the fake will accept. Tests set this to drive the verify screen.
+  String? verificationCode;
+  int resendCount = 0;
+
   @override
   User? findById(String id) => _users[id];
+
+  @override
+  Future<User> verifyEmail(String code) async {
+    if (verificationCode != null && code != verificationCode) {
+      throw const AuthException('That code is not right. 4 attempts left.');
+    }
+    final current = _users.values.first;
+    final verified = current.copyWith(emailVerified: true);
+    _users[current.id] = verified;
+    return verified;
+  }
+
+  @override
+  Future<void> resendVerificationCode() async => resendCount++;
 
   @override
   User? findByEmail(String email) {
@@ -266,14 +286,33 @@ Future<void> pumpApp(
   WidgetTester tester,
   Widget child, {
   List<Override> overrides = const [],
+  bool withRouter = false,
 }) async {
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: overrides,
-      child: MaterialApp(
-        theme: AppTheme.dark(),
-        home: child,
-      ),
-    ),
-  );
+  // Most screens never navigate, so the default stays a plain MaterialApp.
+  // Screens that call context.go need a real router in the tree or go_router
+  // throws "No GoRouter found in context"; withRouter supplies a minimal one
+  // whose destinations are stubs, since what matters is that the call resolves.
+  final app = withRouter
+      ? MaterialApp.router(
+          theme: AppTheme.dark(),
+          routerConfig: GoRouter(
+            initialLocation: '/',
+            routes: [
+              GoRoute(path: '/', builder: (_, __) => child),
+              for (final path in const [
+                Routes.verifyEmail,
+                Routes.onboarding,
+                Routes.home,
+                Routes.login,
+              ])
+                GoRoute(
+                  path: path,
+                  builder: (_, __) => Scaffold(body: Text('stub:$path')),
+                ),
+            ],
+          ),
+        )
+      : MaterialApp(theme: AppTheme.dark(), home: child);
+
+  await tester.pumpWidget(ProviderScope(overrides: overrides, child: app));
 }

@@ -69,6 +69,7 @@ class User {
     required this.salt,
     required this.createdAt,
     required this.photoSeed,
+    this.emailVerified = false,
     this.profile,
   });
 
@@ -83,6 +84,12 @@ class User {
 
   /// Seed for the generated avatar (initials + gradient variant).
   final int photoSeed;
+
+  /// Gates sync, never sign-in. False means the app works exactly as it always
+  /// has, offline, and simply keeps everything on this device until confirmed.
+  /// Local-only builds have no server to confirm with, so they treat it as true.
+  final bool emailVerified;
+
   final UserProfile? profile;
 
   bool get isOnboarded => profile != null;
@@ -93,6 +100,7 @@ class User {
     String? passwordHash,
     String? salt,
     int? photoSeed,
+    bool? emailVerified,
     UserProfile? profile,
   }) =>
       User(
@@ -103,6 +111,7 @@ class User {
         salt: salt ?? this.salt,
         createdAt: createdAt,
         photoSeed: photoSeed ?? this.photoSeed,
+        emailVerified: emailVerified ?? this.emailVerified,
         profile: profile ?? this.profile,
       );
 
@@ -114,6 +123,7 @@ class User {
         'salt': salt,
         'createdAt': createdAt.toIso8601String(),
         'photoSeed': photoSeed,
+        'emailVerified': emailVerified,
         'profile': profile?.toJson(),
       };
 
@@ -127,6 +137,10 @@ class User {
             DateTime.tryParse(json['createdAt'] as String? ?? '') ??
                 DateTime(2020),
         photoSeed: (json['photoSeed'] as num?)?.toInt() ?? 0,
+        // Absent for accounts stored before verification existed, and in
+        // local-only builds. Those have nothing to verify against, so they are
+        // treated as confirmed rather than nagged forever.
+        emailVerified: json['emailVerified'] as bool? ?? true,
         profile: json['profile'] == null
             ? null
             : UserProfile.fromJson(json['profile'] as Map<String, dynamic>),
