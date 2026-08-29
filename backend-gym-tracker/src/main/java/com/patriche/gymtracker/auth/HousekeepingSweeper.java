@@ -26,6 +26,11 @@ import org.springframework.transaction.annotation.Transactional;
  * storing, and reaping them reclaims exactly the space an immediate hard delete would
  * have saved, without the desynchronisation it would have caused.
  *
+ * <p>V3__minimize_free_tier_footprint.sql refers to this class by its former name,
+ * RefreshTokenCleaner. The name is stale but the file must not be corrected: that
+ * migration has been applied, and editing an applied migration changes its checksum and
+ * fails Flyway validation on the next startup.
+ *
  * <p>Deliberately NOT {@code @Scheduled}. On Neon's free plan the compute suspends when
  * idle and every query wakes it, so a timer would burn compute hours purely to tidy up.
  * Instead the sweep runs at startup (the database is already awake for Flyway) and then
