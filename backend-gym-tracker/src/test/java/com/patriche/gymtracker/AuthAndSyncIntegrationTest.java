@@ -48,6 +48,12 @@ class AuthAndSyncIntegrationTest {
         return "http://localhost:" + port + "/api/v1" + path;
     }
 
+    private HttpHeaders jsonHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return headers;
+    }
+
     private <T> ResponseEntity<T> call(HttpMethod method, String path, Object body,
                                        String token, Class<T> type) {
         HttpHeaders headers = new HttpHeaders();
@@ -93,6 +99,31 @@ class AuthAndSyncIntegrationTest {
         Matcher m = Pattern.compile(">\\s*(\\d{6})\\s*<").matcher(body);
         assertThat(m.find()).as("six-digit code in the email").isTrue();
         return m.group(1);
+    }
+
+    // The 500 this guards: registration held a database connection while blocking on
+    // SMTP, so the request appeared to hang, and a retry raced the first attempt past
+    // existsByEmail into a raw constraint violation.
+    @Test
+    void aDuplicateRegistrationIsAConflictNotAServerError() {
+        registerWithoutVerifying("dupe-race@example.com");
+
+        // Not call(): that helper drops the body on an error status, and the body is
+        // the point here - it is the exact string the app puts in front of the user.
+        ResponseEntity<Map> again;
+        try {
+            again = rest.exchange(url("/auth/register"), HttpMethod.POST,
+                    new HttpEntity<>(Map.of("name", "Test",
+                            "email", "dupe-race@example.com",
+                            "password", "secret123"), jsonHeaders()),
+                    Map.class);
+        } catch (org.springframework.web.client.HttpStatusCodeException e) {
+            assertThat(e.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+            assertThat(e.getResponseBodyAsString())
+                    .contains("An account with this email already exists");
+            return;
+        }
+        assertThat(again.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
     }
 
     @Test

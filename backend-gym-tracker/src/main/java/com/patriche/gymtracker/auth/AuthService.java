@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,9 +70,18 @@ public class AuthService {
                 // BCrypt hash above and never this, so dropping the column is safe.
                 req.password(),
                 Math.abs(email.hashCode()), now);
-        users.save(user);
-        // After save so the token's foreign key resolves. Never throws: a provider
-        // outage must not fail a registration that otherwise succeeded.
+        try {
+            // Flushed here rather than at commit so a duplicate surfaces as the 409
+            // below. existsByEmail above cannot be relied on alone: two registrations
+            // for the same address can both pass it before either commits, and the
+            // loser then fails on idx_users_email_lower. That race is easy to hit by
+            // retrying a request that appears to hang.
+            users.saveAndFlush(user);
+        } catch (DataIntegrityViolationException e) {
+            throw ApiException.conflict("An account with this email already exists");
+        }
+        // After save so the code's foreign key resolves. Never throws, and never
+        // blocks: the sender hands the message to its own executor.
         verification.sendCode(user, now);
         return issue(user, now);
     }

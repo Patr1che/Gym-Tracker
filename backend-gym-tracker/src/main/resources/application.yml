@@ -11,6 +11,15 @@ spring:
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
+      # JavaMail defaults every one of these to infinite. Without them a provider
+      # that accepts the TCP connection and then stalls blocks the sending thread
+      # for good - which is exactly how a slow SMTP host took the whole API down:
+      # sends were made inside the registration transaction, so each hung send
+      # held a database connection until the pool was empty and every query,
+      # health checks included, queued behind it.
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
   datasource:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5433/gymtracker}
     username: ${DB_USER:gym}
