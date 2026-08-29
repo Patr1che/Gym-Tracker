@@ -105,6 +105,23 @@ class AuthController extends Notifier<AuthState> {
       ref.read(authRepositoryProvider).resetPassword(
           email: email, name: name, newPassword: newPassword);
 
+  /// Ends the session locally after the server rejected the refresh token.
+  ///
+  /// Unlike [logout] this makes no network call: the token it would revoke is
+  /// already dead, and the request would 401 and recurse straight back here.
+  /// Clearing sync state matters as much as clearing the token - the cursor and
+  /// dirty markers belong to a session that no longer exists, and carrying them
+  /// into the next sign-in would resume someone else's position.
+  Future<void> expireSession() async {
+    if (!state.signedIn) return; // Already gone; several requests can race here.
+    await ref.read(sessionStoreProvider).clear();
+    await ref.read(tokenStoreProvider).clear();
+    if (ref.read(syncEnabledProvider)) {
+      await ref.read(syncStateProvider).reset();
+    }
+    state = const AuthState();
+  }
+
   Future<void> logout() async {
     await ref.read(sessionStoreProvider).clear();
     if (ref.read(syncEnabledProvider)) {

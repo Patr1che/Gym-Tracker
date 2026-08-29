@@ -15,7 +15,7 @@ DROP INDEX IF EXISTS idx_set_logs_exercise;
 
 -- refresh_tokens is only ever read by token_hash, which is UNIQUE and therefore
 -- already indexed. This index existed for the ON DELETE CASCADE from users; the
--- cleanup sweep in RefreshTokenCleaner now holds the table to live tokens only, so
+-- cleanup sweep in HousekeepingSweeper now holds the table to live tokens only, so
 -- the cascade scans a small table instead of a large one.
 DROP INDEX IF EXISTS idx_refresh_tokens_user;
 

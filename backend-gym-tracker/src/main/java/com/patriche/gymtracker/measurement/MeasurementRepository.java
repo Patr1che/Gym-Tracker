@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -26,4 +27,9 @@ public interface MeasurementRepository extends JpaRepository<Measurement, UUID> 
            """)
     List<Measurement> findChangedSince(@Param("userId") UUID userId,
                                        @Param("since") Instant since);
+
+    /** See WorkoutLogRepository#deleteTombstonesBefore. */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from Measurement m where m.deletedAt is not null and m.deletedAt < :before")
+    int deleteTombstonesBefore(@Param("before") Instant before);
 }

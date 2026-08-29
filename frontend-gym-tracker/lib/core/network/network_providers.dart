@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../features/auth/presentation/auth_controller.dart';
 import 'api_client.dart';
 import 'api_config.dart';
 import 'token_store.dart';
@@ -11,7 +12,14 @@ final tokenStoreProvider = Provider<TokenStore>(
 );
 
 final apiClientProvider = Provider<ApiClient>(
-  (ref) => ApiClient(tokens: ref.watch(tokenStoreProvider)),
+  (ref) => ApiClient(
+    tokens: ref.watch(tokenStoreProvider),
+    // Read lazily inside the callback: authControllerProvider depends on this
+    // provider, so resolving it here would be a cycle. By the time a refresh is
+    // rejected the graph is long since built.
+    onSessionExpired: () =>
+        ref.read(authControllerProvider.notifier).expireSession(),
+  ),
 );
 
 /// Whether the app talks to the server at all. False falls back to the original

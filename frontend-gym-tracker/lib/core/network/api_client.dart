@@ -22,7 +22,7 @@ class ApiException implements Exception {
 /// Thin wrapper over Dio that attaches the bearer token and, on a 401, refreshes
 /// once and replays the request.
 class ApiClient {
-  ApiClient({required this.tokens, Dio? dio, String? baseUrl})
+  ApiClient({required this.tokens, Dio? dio, String? baseUrl, this.onSessionExpired})
       : _dio = dio ?? Dio() {
     _dio.options
       ..baseUrl = (baseUrl ?? ApiConfig.baseUrl) + ApiConfig.apiPrefix
@@ -35,6 +35,17 @@ class ApiClient {
   }
 
   final TokenStore tokens;
+
+  /// Called when the refresh token itself is rejected - the one unambiguous
+  /// "this session is over" signal the server gives us.
+  ///
+  /// Deliberately not called for an ordinary request failure. Sync fails
+  /// routinely and harmlessly: no network, a suspended free instance, a cold
+  /// start. Signing the user out on any of those would lock them out of their
+  /// own offline data at exactly the moment they cannot reach the server to
+  /// sign back in.
+  final void Function()? onSessionExpired;
+
   final Dio _dio;
 
   /// Guards against a burst of 401s all refreshing at once and invalidating
@@ -111,10 +122,20 @@ class ApiClient {
         );
         return true;
       }
-    } catch (_) {
-      // Fall through - treat as signed out.
+      // The server answered and refused the token: expired, revoked, or rotated
+      // out from under us. That is the only response that means the session is
+      // genuinely over.
+      if (res.statusCode == 401 || res.statusCode == 403) {
+        await tokens.clear();
+        onSessionExpired?.call();
+      }
+    } on DioException {
+      // Never reached the server, or the server failed (5xx is thrown, since
+      // validateStatus only accepts < 500). Neither says anything about whether
+      // the session is still valid, so the tokens are kept and the next attempt
+      // retries. This is the case that must not sign anyone out - it is what a
+      // suspended free instance and a dead subway connection both look like.
     }
-    await tokens.clear();
     return false;
   }
 

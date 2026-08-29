@@ -69,6 +69,12 @@ app:
     refresh-ttl-days: 30
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:5555}
+  housekeeping:
+    # How long a tombstone survives before the row is deleted for good. Long enough that
+    # a device offline for a season still receives the deletion in a pull; short enough
+    # that deleted data is not stored forever. Lower it and a device that was away longer
+    # than this keeps records everyone else deleted.
+    tombstone-retention-days: 90
 
 logging:
   level:
