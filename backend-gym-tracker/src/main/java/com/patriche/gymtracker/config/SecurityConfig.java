@@ -23,6 +23,7 @@ class SecurityConfig {
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter,
+                                    RateLimitFilter rateLimitFilter,
                                     JsonAuthEntryPoint entryPoint) throws Exception {
         return http
                 // Safe to disable: the API is stateless and authenticates with a bearer
@@ -40,6 +41,11 @@ class SecurityConfig {
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e.authenticationEntryPoint(entryPoint))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                // Ahead of the JWT filter so a refused request costs no token parsing.
+                // The auth routes below are permitAll by necessity - you cannot present a
+                // token to get your first token - so this is the only thing standing
+                // between a public address and unlimited registrations.
+                .addFilterBefore(rateLimitFilter, JwtAuthFilter.class)
                 .build();
     }
 

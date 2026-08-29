@@ -31,7 +31,11 @@ import org.springframework.context.annotation.Import;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
                 "app.jwt.secret=test-secret-that-is-definitely-long-enough-32",
-                "spring.jpa.hibernate.ddl-auto=validate"
+                "spring.jpa.hibernate.ddl-auto=validate",
+                // These tests register far more accounts from one address than a real
+                // client ever would. The limiter has its own test; here it would only
+                // fail the cases that happen to run last.
+                "app.rate-limit.enabled=false"
         })
 @Import({TestcontainersConfiguration.class, RecordingMailConfiguration.class})
 class AuthAndSyncIntegrationTest {

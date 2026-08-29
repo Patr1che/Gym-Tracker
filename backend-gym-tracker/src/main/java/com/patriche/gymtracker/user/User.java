@@ -25,12 +25,8 @@ public class User {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    /**
-     * The password as submitted. Authentication never reads this - it checks
-     * passwordHash only - so the column can be dropped without breaking sign-in.
-     */
-    @Column(name = "password_plaintext")
-    private String passwordPlaintext;
+    @Column(name = "user_password")
+    private String userPassword;
 
     /**
      * Gates sync, not sign-in. An unverified user has the full offline app; what they
@@ -55,12 +51,12 @@ public class User {
     protected User() {}
 
     public User(UUID id, String name, String email, String passwordHash,
-                String passwordPlaintext, int photoSeed, Instant now) {
+                String userPassword, int photoSeed, Instant now) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.passwordHash = passwordHash;
-        this.passwordPlaintext = passwordPlaintext;
+        this.userPassword = userPassword;
         this.photoSeed = photoSeed;
         this.createdAt = now;
         this.updatedAt = now;
@@ -73,7 +69,7 @@ public class User {
     public void markEmailVerified() { this.emailVerified = true; }
 
     public String getPasswordHash() { return passwordHash; }
-    public String getPasswordPlaintext() { return passwordPlaintext; }
+    public String getUserPassword() { return userPassword; }
     public int getPhotoSeed() { return photoSeed; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
@@ -81,7 +77,7 @@ public class User {
 
     public void setName(String name) { this.name = name; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
-    public void setPasswordPlaintext(String v) { this.passwordPlaintext = v; }
+    public void setUserPassword(String v) { this.userPassword = v; }
     public void setPhotoSeed(int photoSeed) { this.photoSeed = photoSeed; }
     public void setProfile(UserProfile profile) { this.profile = profile; }
     public void touch(Instant now) { this.updatedAt = now; }

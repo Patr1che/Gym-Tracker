@@ -56,6 +56,9 @@ spring:
 server:
   port: ${PORT:8097}
   shutdown: graceful
+  # Render terminates TLS and proxies, so without this every request appears to come
+  # from the proxy - one address, and RateLimitFilter would throttle all users as one.
+  forward-headers-strategy: framework
 
 management:
   endpoints:
@@ -98,6 +101,17 @@ app:
     brevo-api-key: ${BREVO_API_KEY:}
     code-ttl-minutes: 10
     resend-cooldown-minutes: 5
+  rate-limit:
+    enabled: ${RATE_LIMIT_ENABLED:true}
+    # Generous for a person, cheap against a script. A sign-in is one request and the app
+    # retries a failed sync a handful of times, so twenty a minute is far above real use.
+    auth-per-minute: ${RATE_LIMIT_AUTH_PER_MINUTE:20}
+    # The one that protects the free tier: every account is a database row and a
+    # verification email out of a daily quota. Five an hour still covers a household
+    # sharing an address, or a phone and a laptop behind the same NAT.
+    registrations-per-hour: ${RATE_LIMIT_REGISTRATIONS_PER_HOUR:5}
+    # A bound on memory, not on users. Each entry is a few dozen bytes.
+    max-tracked-clients: ${RATE_LIMIT_MAX_TRACKED_CLIENTS:10000}
   housekeeping:
     # How long a tombstone survives before the row is deleted for good. Long enough that
     # a device offline for a season still receives the deletion in a pull; short enough

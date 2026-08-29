@@ -66,8 +66,6 @@ public class AuthService {
         User user = new User(
                 UUID.randomUUID(), req.name().trim(), email,
                 passwordEncoder.encode(req.password()),
-                // Stored readable for inspection during development. Login checks the
-                // BCrypt hash above and never this, so dropping the column is safe.
                 req.password(),
                 Math.abs(email.hashCode()), now);
         try {

@@ -5,7 +5,18 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /** Binds the `app.*` block of application.yml. */
 @ConfigurationProperties(prefix = "app")
-public record AppProperties(Jwt jwt, Cors cors, Housekeeping housekeeping, Mail mail) {
+public record AppProperties(Jwt jwt, Cors cors, Housekeeping housekeeping, Mail mail,
+                            RateLimit rateLimit) {
+
+    /**
+     * Caps on the unauthenticated auth endpoints. Two windows, because password
+     * guessing is a burst and account farming is a drip; see RateLimitFilter.
+     *
+     * @param maxTrackedClients when the address table passes this, idle entries are
+     *                          swept - it bounds memory, it is not a limit on users
+     */
+    public record RateLimit(boolean enabled, int authPerMinute, int registrationsPerHour,
+                            int maxTrackedClients) {}
 
     /**
      * Verification email settings. No base URL here: verification mails carry a code the
